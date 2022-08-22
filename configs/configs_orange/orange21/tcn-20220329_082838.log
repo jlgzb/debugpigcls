@@ -1,0 +1,2211 @@
+2022-03-29 08:28:38,157 - mmcls - INFO - Environment info:
+------------------------------------------------------------
+sys.platform: linux
+Python: 3.7.11 (default, Jul 27 2021, 14:32:16) [GCC 7.5.0]
+CUDA available: True
+GPU 0: Tesla P100-SXM2-16GB
+CUDA_HOME: /usr/local/cuda
+NVCC: Cuda compilation tools, release 10.1, V10.1.105
+GCC: gcc (GCC) 4.8.5 20150623 (Red Hat 4.8.5-4)
+PyTorch: 1.7.1
+PyTorch compiling details: PyTorch built with:
+  - GCC 7.3
+  - C++ Version: 201402
+  - Intel(R) oneAPI Math Kernel Library Version 2021.4-Product Build 20210904 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v1.6.0 (Git Hash 5ef631a030a6f73131c77892041042805a06064f)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - NNPACK is enabled
+  - CPU capability usage: AVX2
+  - CUDA Runtime 10.1
+  - NVCC architecture flags: -gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_61,code=sm_61;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_37,code=compute_37
+  - CuDNN 7.6.3
+  - Magma 2.5.2
+  - Build settings: BLAS=MKL, BUILD_TYPE=Release, CXX_FLAGS= -Wno-deprecated -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -fopenmp -DNDEBUG -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DUSE_VULKAN_WRAPPER -O2 -fPIC -Wno-narrowing -Wall -Wextra -Werror=return-type -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-local-typedefs -Wno-strict-overflow -Wno-strict-aliasing -Wno-error=deprecated-declarations -Wno-stringop-overflow -Wno-psabi -Wno-error=pedantic -Wno-error=redundant-decls -Wno-error=old-style-cast -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Wno-stringop-overflow, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, USE_CUDA=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=ON, USE_NNPACK=ON, USE_OPENMP=ON, 
+
+TorchVision: 0.8.2
+OpenCV: 4.5.5
+MMCV: 1.4.5
+MMCV Compiler: GCC 7.3
+MMCV CUDA Compiler: 10.1
+MMClassification: 0.21.0+
+------------------------------------------------------------
+
+2022-03-29 08:28:38,158 - mmcls - INFO - Distributed training: False
+2022-03-29 08:28:39,234 - mmcls - INFO - Config:
+model = dict(
+    type='ImageClassifier',
+    backbone=dict(
+        type='RepVGG',
+        arch='D2se',
+        out_indices=(3, ),
+        frozen_stages=4,
+        init_cfg=dict(
+            type='Pretrained',
+            checkpoint=
+            'mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth',
+            prefix='backbone')),
+    neck=dict(type='UnitTCN'),
+    head=dict(
+        type='LinearClsHead',
+        num_classes=21,
+        in_channels=2560,
+        loss=dict(
+            type='LabelSmoothLoss',
+            loss_weight=1.0,
+            label_smooth_val=0.1,
+            mode='classy_vision',
+            num_classes=21),
+        topk=(1, 5)),
+    train_cfg=dict(
+        augments=dict(type='BatchMixup', alpha=0.2, num_classes=21, prob=1.0)))
+dataset_type = 'Orange21'
+images_dir = 'data/orange/colorIMG_6view'
+ann_file_dir = 'data/orange/statics/ann_label21'
+label_type = 'name2label'
+img_norm_cfg = dict(
+    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
+train_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(type='BboxCrop'),
+    dict(type='Resize', size=224),
+    dict(type='RandomFlip', flip_prob=0.5, direction='horizontal'),
+    dict(
+        type='Normalize',
+        mean=[123.675, 116.28, 103.53],
+        std=[58.395, 57.12, 57.375],
+        to_rgb=True),
+    dict(type='ImageToTensor', keys=['img']),
+    dict(type='ToTensor', keys=['gt_label']),
+    dict(type='Collect', keys=['img', 'gt_label'])
+]
+test_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(type='BboxCrop'),
+    dict(type='Resize', size=224),
+    dict(
+        type='Normalize',
+        mean=[123.675, 116.28, 103.53],
+        std=[58.395, 57.12, 57.375],
+        to_rgb=True),
+    dict(type='ImageToTensor', keys=['img']),
+    dict(type='Collect', keys=['img'])
+]
+data = dict(
+    samples_per_gpu=32,
+    workers_per_gpu=1,
+    train=dict(
+        type='Orange21',
+        data_prefix='data/orange/colorIMG_6view',
+        ann_file=
+        'data/orange/statics/ann_label21/name2label_6view_train_bbox.txt',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='BboxCrop'),
+            dict(type='Resize', size=224),
+            dict(type='RandomFlip', flip_prob=0.5, direction='horizontal'),
+            dict(
+                type='Normalize',
+                mean=[123.675, 116.28, 103.53],
+                std=[58.395, 57.12, 57.375],
+                to_rgb=True),
+            dict(type='ImageToTensor', keys=['img']),
+            dict(type='ToTensor', keys=['gt_label']),
+            dict(type='Collect', keys=['img', 'gt_label'])
+        ]),
+    val=dict(
+        type='Orange21',
+        data_prefix='data/orange/colorIMG_6view',
+        ann_file=
+        'data/orange/statics/ann_label21/name2label_6view_val_bbox.txt',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='BboxCrop'),
+            dict(type='Resize', size=224),
+            dict(
+                type='Normalize',
+                mean=[123.675, 116.28, 103.53],
+                std=[58.395, 57.12, 57.375],
+                to_rgb=True),
+            dict(type='ImageToTensor', keys=['img']),
+            dict(type='Collect', keys=['img'])
+        ]),
+    test=dict(
+        type='Orange21',
+        data_prefix='data/orange/colorIMG_6view',
+        ann_file=
+        'data/orange/statics/ann_label21/name2label_6view_test_bbox.txt',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='BboxCrop'),
+            dict(type='Resize', size=224),
+            dict(
+                type='Normalize',
+                mean=[123.675, 116.28, 103.53],
+                std=[58.395, 57.12, 57.375],
+                to_rgb=True),
+            dict(type='ImageToTensor', keys=['img']),
+            dict(type='Collect', keys=['img'])
+        ]))
+evaluation = dict(
+    interval=1, metric=['accuracy', 'precision', 'recall', 'f1_score'])
+optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
+optimizer_config = dict(grad_clip=None)
+lr_config = dict(policy='step', step=[15, 20, 25])
+runner = dict(type='EpochBasedRunner', max_epochs=30)
+checkpoint_config = dict(interval=1)
+log_config = dict(interval=20, hooks=[dict(type='TextLoggerHook')])
+dist_params = dict(backend='nccl')
+log_level = 'INFO'
+load_from = None
+resume_from = None
+workflow = [('train', 1)]
+work_dir = './mmgzb/work_dirs/repvgg-D2se-tcn_1xb32-sgd-aprf-30e_orange21'
+gpu_ids = [0]
+
+2022-03-29 08:28:39,237 - mmcls - INFO - Set random seed to 238505086, deterministic: False
+2022-03-29 08:28:40,374 - mmcls - INFO - initialize RepVGG with init_cfg {'type': 'Pretrained', 'checkpoint': 'mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth', 'prefix': 'backbone'}
+2022-03-29 08:28:47,760 - mmcls - INFO - initialize LinearClsHead with init_cfg {'type': 'Normal', 'layer': 'Linear', 'std': 0.01}
+Name of parameter - Initialization information
+
+backbone.stem.branch_3x3.conv.weight - torch.Size([64, 3, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stem.branch_3x3.norm.weight - torch.Size([64]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stem.branch_3x3.norm.bias - torch.Size([64]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stem.branch_1x1.conv.weight - torch.Size([64, 3, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stem.branch_1x1.norm.weight - torch.Size([64]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stem.branch_1x1.norm.bias - torch.Size([64]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stem.se_layer.conv1.conv.weight - torch.Size([4, 64, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stem.se_layer.conv1.conv.bias - torch.Size([4]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stem.se_layer.conv2.conv.weight - torch.Size([64, 4, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stem.se_layer.conv2.conv.bias - torch.Size([64]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.0.branch_3x3.conv.weight - torch.Size([160, 64, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.0.branch_3x3.norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.0.branch_3x3.norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.0.branch_1x1.conv.weight - torch.Size([160, 64, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.0.branch_1x1.norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.0.branch_1x1.norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.0.se_layer.conv1.conv.weight - torch.Size([10, 160, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.0.se_layer.conv1.conv.bias - torch.Size([10]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.0.se_layer.conv2.conv.weight - torch.Size([160, 10, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.0.se_layer.conv2.conv.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.1.branch_norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.1.branch_norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.1.branch_3x3.conv.weight - torch.Size([160, 160, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.1.branch_3x3.norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.1.branch_3x3.norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.1.branch_1x1.conv.weight - torch.Size([160, 160, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.1.branch_1x1.norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.1.branch_1x1.norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.1.se_layer.conv1.conv.weight - torch.Size([10, 160, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.1.se_layer.conv1.conv.bias - torch.Size([10]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.1.se_layer.conv2.conv.weight - torch.Size([160, 10, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.1.se_layer.conv2.conv.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.2.branch_norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.2.branch_norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.2.branch_3x3.conv.weight - torch.Size([160, 160, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.2.branch_3x3.norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.2.branch_3x3.norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.2.branch_1x1.conv.weight - torch.Size([160, 160, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.2.branch_1x1.norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.2.branch_1x1.norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.2.se_layer.conv1.conv.weight - torch.Size([10, 160, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.2.se_layer.conv1.conv.bias - torch.Size([10]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.2.se_layer.conv2.conv.weight - torch.Size([160, 10, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.2.se_layer.conv2.conv.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.3.branch_norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.3.branch_norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.3.branch_3x3.conv.weight - torch.Size([160, 160, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.3.branch_3x3.norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.3.branch_3x3.norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.3.branch_1x1.conv.weight - torch.Size([160, 160, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.3.branch_1x1.norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.3.branch_1x1.norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.3.se_layer.conv1.conv.weight - torch.Size([10, 160, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.3.se_layer.conv1.conv.bias - torch.Size([10]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.3.se_layer.conv2.conv.weight - torch.Size([160, 10, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.3.se_layer.conv2.conv.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.4.branch_norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.4.branch_norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.4.branch_3x3.conv.weight - torch.Size([160, 160, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.4.branch_3x3.norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.4.branch_3x3.norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.4.branch_1x1.conv.weight - torch.Size([160, 160, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.4.branch_1x1.norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.4.branch_1x1.norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.4.se_layer.conv1.conv.weight - torch.Size([10, 160, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.4.se_layer.conv1.conv.bias - torch.Size([10]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.4.se_layer.conv2.conv.weight - torch.Size([160, 10, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.4.se_layer.conv2.conv.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.5.branch_norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.5.branch_norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.5.branch_3x3.conv.weight - torch.Size([160, 160, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.5.branch_3x3.norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.5.branch_3x3.norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.5.branch_1x1.conv.weight - torch.Size([160, 160, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.5.branch_1x1.norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.5.branch_1x1.norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.5.se_layer.conv1.conv.weight - torch.Size([10, 160, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.5.se_layer.conv1.conv.bias - torch.Size([10]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.5.se_layer.conv2.conv.weight - torch.Size([160, 10, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.5.se_layer.conv2.conv.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.6.branch_norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.6.branch_norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.6.branch_3x3.conv.weight - torch.Size([160, 160, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.6.branch_3x3.norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.6.branch_3x3.norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.6.branch_1x1.conv.weight - torch.Size([160, 160, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.6.branch_1x1.norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.6.branch_1x1.norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.6.se_layer.conv1.conv.weight - torch.Size([10, 160, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.6.se_layer.conv1.conv.bias - torch.Size([10]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.6.se_layer.conv2.conv.weight - torch.Size([160, 10, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.6.se_layer.conv2.conv.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.7.branch_norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.7.branch_norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.7.branch_3x3.conv.weight - torch.Size([160, 160, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.7.branch_3x3.norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.7.branch_3x3.norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.7.branch_1x1.conv.weight - torch.Size([160, 160, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.7.branch_1x1.norm.weight - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.7.branch_1x1.norm.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.7.se_layer.conv1.conv.weight - torch.Size([10, 160, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.7.se_layer.conv1.conv.bias - torch.Size([10]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.7.se_layer.conv2.conv.weight - torch.Size([160, 10, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_1.7.se_layer.conv2.conv.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.0.branch_3x3.conv.weight - torch.Size([320, 160, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.0.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.0.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.0.branch_1x1.conv.weight - torch.Size([320, 160, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.0.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.0.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.0.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.0.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.0.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.0.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.1.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.1.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.1.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.1.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.1.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.1.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.1.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.1.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.1.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.1.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.1.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.1.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.2.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.2.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.2.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.2.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.2.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.2.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.2.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.2.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.2.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.2.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.2.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.2.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.3.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.3.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.3.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.3.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.3.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.3.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.3.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.3.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.3.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.3.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.3.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.3.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.4.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.4.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.4.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.4.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.4.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.4.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.4.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.4.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.4.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.4.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.4.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.4.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.5.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.5.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.5.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.5.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.5.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.5.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.5.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.5.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.5.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.5.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.5.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.5.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.6.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.6.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.6.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.6.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.6.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.6.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.6.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.6.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.6.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.6.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.6.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.6.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.7.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.7.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.7.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.7.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.7.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.7.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.7.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.7.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.7.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.7.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.7.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.7.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.8.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.8.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.8.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.8.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.8.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.8.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.8.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.8.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.8.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.8.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.8.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.8.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.9.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.9.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.9.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.9.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.9.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.9.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.9.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.9.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.9.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.9.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.9.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.9.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.10.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.10.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.10.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.10.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.10.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.10.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.10.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.10.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.10.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.10.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.10.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.10.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.11.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.11.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.11.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.11.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.11.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.11.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.11.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.11.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.11.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.11.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.11.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.11.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.12.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.12.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.12.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.12.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.12.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.12.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.12.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.12.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.12.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.12.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.12.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.12.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.13.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.13.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.13.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.13.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.13.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.13.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.13.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.13.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.13.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.13.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.13.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_2.13.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.0.branch_3x3.conv.weight - torch.Size([640, 320, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.0.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.0.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.0.branch_1x1.conv.weight - torch.Size([640, 320, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.0.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.0.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.0.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.0.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.0.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.0.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.1.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.1.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.1.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.1.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.1.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.1.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.1.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.1.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.1.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.1.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.1.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.1.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.2.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.2.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.2.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.2.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.2.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.2.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.2.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.2.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.2.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.2.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.2.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.2.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.3.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.3.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.3.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.3.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.3.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.3.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.3.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.3.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.3.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.3.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.3.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.3.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.4.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.4.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.4.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.4.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.4.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.4.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.4.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.4.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.4.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.4.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.4.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.4.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.5.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.5.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.5.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.5.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.5.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.5.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.5.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.5.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.5.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.5.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.5.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.5.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.6.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.6.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.6.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.6.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.6.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.6.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.6.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.6.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.6.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.6.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.6.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.6.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.7.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.7.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.7.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.7.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.7.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.7.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.7.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.7.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.7.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.7.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.7.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.7.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.8.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.8.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.8.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.8.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.8.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.8.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.8.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.8.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.8.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.8.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.8.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.8.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.9.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.9.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.9.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.9.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.9.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.9.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.9.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.9.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.9.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.9.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.9.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.9.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.10.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.10.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.10.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.10.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.10.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.10.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.10.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.10.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.10.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.10.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.10.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.10.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.11.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.11.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.11.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.11.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.11.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.11.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.11.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.11.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.11.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.11.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.11.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.11.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.12.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.12.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.12.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.12.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.12.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.12.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.12.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.12.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.12.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.12.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.12.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.12.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.13.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.13.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.13.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.13.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.13.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.13.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.13.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.13.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.13.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.13.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.13.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.13.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.14.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.14.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.14.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.14.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.14.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.14.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.14.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.14.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.14.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.14.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.14.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.14.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.15.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.15.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.15.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.15.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.15.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.15.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.15.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.15.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.15.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.15.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.15.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.15.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.16.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.16.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.16.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.16.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.16.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.16.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.16.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.16.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.16.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.16.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.16.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.16.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.17.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.17.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.17.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.17.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.17.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.17.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.17.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.17.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.17.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.17.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.17.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.17.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.18.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.18.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.18.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.18.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.18.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.18.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.18.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.18.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.18.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.18.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.18.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.18.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.19.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.19.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.19.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.19.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.19.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.19.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.19.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.19.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.19.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.19.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.19.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.19.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.20.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.20.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.20.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.20.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.20.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.20.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.20.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.20.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.20.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.20.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.20.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.20.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.21.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.21.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.21.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.21.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.21.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.21.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.21.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.21.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.21.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.21.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.21.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.21.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.22.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.22.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.22.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.22.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.22.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.22.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.22.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.22.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.22.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.22.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.22.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.22.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.23.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.23.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.23.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.23.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.23.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.23.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.23.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.23.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.23.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.23.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.23.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_3.23.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_4.0.branch_3x3.conv.weight - torch.Size([2560, 640, 3, 3]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_4.0.branch_3x3.norm.weight - torch.Size([2560]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_4.0.branch_3x3.norm.bias - torch.Size([2560]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_4.0.branch_1x1.conv.weight - torch.Size([2560, 640, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_4.0.branch_1x1.norm.weight - torch.Size([2560]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_4.0.branch_1x1.norm.bias - torch.Size([2560]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_4.0.se_layer.conv1.conv.weight - torch.Size([160, 2560, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_4.0.se_layer.conv1.conv.bias - torch.Size([160]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_4.0.se_layer.conv2.conv.weight - torch.Size([2560, 160, 1, 1]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+backbone.stage_4.0.se_layer.conv2.conv.bias - torch.Size([2560]): 
+PretrainedInit: load from mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32-sgd-aprf-30e_orange21/epoch_26.pth 
+
+neck.tcn.conv_1.0.weight - torch.Size([2560, 2560, 1, 3]): 
+The value is the same before and after calling `init_weights` of ImageClassifier  
+
+neck.tcn.conv_1.0.bias - torch.Size([2560]): 
+The value is the same before and after calling `init_weights` of ImageClassifier  
+
+neck.tcn.conv_1.1.weight - torch.Size([2560]): 
+The value is the same before and after calling `init_weights` of ImageClassifier  
+
+neck.tcn.conv_1.1.bias - torch.Size([2560]): 
+The value is the same before and after calling `init_weights` of ImageClassifier  
+
+neck.tcn.conv_2.0.weight - torch.Size([2560, 2560, 1, 1]): 
+The value is the same before and after calling `init_weights` of ImageClassifier  
+
+neck.tcn.conv_2.0.bias - torch.Size([2560]): 
+The value is the same before and after calling `init_weights` of ImageClassifier  
+
+neck.tcn.conv_2.1.weight - torch.Size([2560]): 
+The value is the same before and after calling `init_weights` of ImageClassifier  
+
+neck.tcn.conv_2.1.bias - torch.Size([2560]): 
+The value is the same before and after calling `init_weights` of ImageClassifier  
+
+head.fc.weight - torch.Size([21, 2560]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+head.fc.bias - torch.Size([21]): 
+NormalInit: mean=0, std=0.01, bias=0 
+2022-03-29 08:28:48,902 - mmcls - INFO - Start running, host: chaixiujuan@gpu07, work_dir: /lustre/chaixiujuan/gzb/mmlab/mmclassification/mmgzb/work_dirs/repvgg-D2se-tcn_1xb32-sgd-aprf-30e_orange21
+2022-03-29 08:28:48,903 - mmcls - INFO - Hooks will be executed in the following order:
+before_run:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(NORMAL      ) CheckpointHook                     
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_epoch:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(LOW         ) IterTimerHook                      
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_iter:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(LOW         ) IterTimerHook                      
+(LOW         ) EvalHook                           
+ -------------------- 
+after_train_iter:
+(ABOVE_NORMAL) OptimizerHook                      
+(NORMAL      ) CheckpointHook                     
+(LOW         ) IterTimerHook                      
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_train_epoch:
+(NORMAL      ) CheckpointHook                     
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_epoch:
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_epoch:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_run:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+2022-03-29 08:28:48,903 - mmcls - INFO - workflow: [('train', 1)], max: 30 epochs
+2022-03-29 08:28:48,903 - mmcls - INFO - Checkpoints will be saved to /lustre/chaixiujuan/gzb/mmlab/mmclassification/mmgzb/work_dirs/repvgg-D2se-tcn_1xb32-sgd-aprf-30e_orange21 by HardDiskBackend.
+2022-03-29 08:28:57,444 - mmcls - INFO - Epoch [1][20/274]	lr: 1.000e-02, eta: 0:58:11, time: 0.426, data_time: 0.148, memory: 1280, loss: 2.6784
+2022-03-29 08:29:02,802 - mmcls - INFO - Epoch [1][40/274]	lr: 1.000e-02, eta: 0:47:17, time: 0.268, data_time: 0.017, memory: 1280, loss: 1.6501
+2022-03-29 08:29:07,859 - mmcls - INFO - Epoch [1][60/274]	lr: 1.000e-02, eta: 0:42:54, time: 0.253, data_time: 0.004, memory: 1280, loss: 1.8420
+2022-03-29 08:29:13,007 - mmcls - INFO - Epoch [1][80/274]	lr: 1.000e-02, eta: 0:40:50, time: 0.257, data_time: 0.007, memory: 1280, loss: 1.1652
+2022-03-29 08:29:18,521 - mmcls - INFO - Epoch [1][100/274]	lr: 1.000e-02, eta: 0:40:03, time: 0.276, data_time: 0.027, memory: 1280, loss: 1.1666
+2022-03-29 08:29:23,623 - mmcls - INFO - Epoch [1][120/274]	lr: 1.000e-02, eta: 0:39:01, time: 0.255, data_time: 0.005, memory: 1280, loss: 1.1318
+2022-03-29 08:29:28,972 - mmcls - INFO - Epoch [1][140/274]	lr: 1.000e-02, eta: 0:38:30, time: 0.267, data_time: 0.018, memory: 1280, loss: 1.1562
+2022-03-29 08:29:34,221 - mmcls - INFO - Epoch [1][160/274]	lr: 1.000e-02, eta: 0:38:01, time: 0.263, data_time: 0.013, memory: 1280, loss: 1.2891
+2022-03-29 08:29:39,344 - mmcls - INFO - Epoch [1][180/274]	lr: 1.000e-02, eta: 0:37:31, time: 0.256, data_time: 0.007, memory: 1280, loss: 1.2477
+2022-03-29 08:29:44,900 - mmcls - INFO - Epoch [1][200/274]	lr: 1.000e-02, eta: 0:37:24, time: 0.278, data_time: 0.028, memory: 1280, loss: 0.9714
+2022-03-29 08:29:50,217 - mmcls - INFO - Epoch [1][220/274]	lr: 1.000e-02, eta: 0:37:08, time: 0.266, data_time: 0.017, memory: 1280, loss: 1.2060
+2022-03-29 08:29:55,381 - mmcls - INFO - Epoch [1][240/274]	lr: 1.000e-02, eta: 0:36:49, time: 0.258, data_time: 0.009, memory: 1280, loss: 1.0827
+2022-03-29 08:30:00,729 - mmcls - INFO - Epoch [1][260/274]	lr: 1.000e-02, eta: 0:36:38, time: 0.267, data_time: 0.017, memory: 1280, loss: 0.8306
+2022-03-29 08:30:04,483 - mmcls - INFO - Saving checkpoint at 1 epochs
+2022-03-29 08:30:21,769 - mmcls - INFO - Epoch(val) [1][60]	accuracy_top-1: 96.9841, accuracy_top-5: 99.7884, precision: 97.0591, recall: 96.9841, f1_score: 96.9691
+2022-03-29 08:30:29,250 - mmcls - INFO - Epoch [2][20/274]	lr: 1.000e-02, eta: 0:35:37, time: 0.373, data_time: 0.122, memory: 1280, loss: 1.2024
+2022-03-29 08:30:34,294 - mmcls - INFO - Epoch [2][40/274]	lr: 1.000e-02, eta: 0:35:22, time: 0.252, data_time: 0.000, memory: 1280, loss: 1.0554
+2022-03-29 08:30:39,317 - mmcls - INFO - Epoch [2][60/274]	lr: 1.000e-02, eta: 0:35:09, time: 0.251, data_time: 0.000, memory: 1280, loss: 1.0877
+2022-03-29 08:30:44,332 - mmcls - INFO - Epoch [2][80/274]	lr: 1.000e-02, eta: 0:34:56, time: 0.251, data_time: 0.000, memory: 1280, loss: 0.9919
+2022-03-29 08:30:49,356 - mmcls - INFO - Epoch [2][100/274]	lr: 1.000e-02, eta: 0:34:44, time: 0.251, data_time: 0.000, memory: 1280, loss: 0.8550
+2022-03-29 08:30:54,389 - mmcls - INFO - Epoch [2][120/274]	lr: 1.000e-02, eta: 0:34:33, time: 0.252, data_time: 0.001, memory: 1280, loss: 1.1316
+2022-03-29 08:30:59,419 - mmcls - INFO - Epoch [2][140/274]	lr: 1.000e-02, eta: 0:34:23, time: 0.251, data_time: 0.001, memory: 1280, loss: 0.9997
+2022-03-29 08:31:04,470 - mmcls - INFO - Epoch [2][160/274]	lr: 1.000e-02, eta: 0:34:13, time: 0.253, data_time: 0.002, memory: 1280, loss: 0.8317
+2022-03-29 08:31:09,488 - mmcls - INFO - Epoch [2][180/274]	lr: 1.000e-02, eta: 0:34:04, time: 0.251, data_time: 0.000, memory: 1280, loss: 0.8676
+2022-03-29 08:31:14,508 - mmcls - INFO - Epoch [2][200/274]	lr: 1.000e-02, eta: 0:33:54, time: 0.251, data_time: 0.000, memory: 1280, loss: 0.9098
+2022-03-29 08:31:19,525 - mmcls - INFO - Epoch [2][220/274]	lr: 1.000e-02, eta: 0:33:45, time: 0.251, data_time: 0.000, memory: 1280, loss: 0.9140
+2022-03-29 08:31:24,549 - mmcls - INFO - Epoch [2][240/274]	lr: 1.000e-02, eta: 0:33:37, time: 0.251, data_time: 0.000, memory: 1280, loss: 1.0025
+2022-03-29 08:31:29,575 - mmcls - INFO - Epoch [2][260/274]	lr: 1.000e-02, eta: 0:33:29, time: 0.251, data_time: 0.000, memory: 1280, loss: 1.0526
+2022-03-29 08:31:32,933 - mmcls - INFO - Saving checkpoint at 2 epochs
+2022-03-29 08:31:49,494 - mmcls - INFO - Epoch(val) [2][60]	accuracy_top-1: 97.1429, accuracy_top-5: 99.7355, precision: 97.2201, recall: 97.1429, f1_score: 97.1171
+2022-03-29 08:31:56,996 - mmcls - INFO - Epoch [3][20/274]	lr: 1.000e-02, eta: 0:33:01, time: 0.374, data_time: 0.121, memory: 1280, loss: 1.0139
+2022-03-29 08:32:02,009 - mmcls - INFO - Epoch [3][40/274]	lr: 1.000e-02, eta: 0:32:53, time: 0.251, data_time: 0.000, memory: 1280, loss: 0.8925
+2022-03-29 08:32:07,010 - mmcls - INFO - Epoch [3][60/274]	lr: 1.000e-02, eta: 0:32:46, time: 0.250, data_time: 0.001, memory: 1280, loss: 0.9114
+2022-03-29 08:32:12,081 - mmcls - INFO - Epoch [3][80/274]	lr: 1.000e-02, eta: 0:32:40, time: 0.254, data_time: 0.001, memory: 1280, loss: 0.8594
+2022-03-29 08:32:17,100 - mmcls - INFO - Epoch [3][100/274]	lr: 1.000e-02, eta: 0:32:33, time: 0.251, data_time: 0.001, memory: 1280, loss: 0.9282
+2022-03-29 08:32:22,105 - mmcls - INFO - Epoch [3][120/274]	lr: 1.000e-02, eta: 0:32:26, time: 0.250, data_time: 0.000, memory: 1280, loss: 0.8129
+2022-03-29 08:32:27,108 - mmcls - INFO - Epoch [3][140/274]	lr: 1.000e-02, eta: 0:32:19, time: 0.250, data_time: 0.000, memory: 1280, loss: 0.8775
+2022-03-29 08:32:32,108 - mmcls - INFO - Epoch [3][160/274]	lr: 1.000e-02, eta: 0:32:12, time: 0.250, data_time: 0.001, memory: 1280, loss: 1.0276
+2022-03-29 08:32:37,109 - mmcls - INFO - Epoch [3][180/274]	lr: 1.000e-02, eta: 0:32:06, time: 0.250, data_time: 0.001, memory: 1280, loss: 1.0405
+2022-03-29 08:32:42,106 - mmcls - INFO - Epoch [3][200/274]	lr: 1.000e-02, eta: 0:31:59, time: 0.250, data_time: 0.001, memory: 1280, loss: 0.8038
+2022-03-29 08:32:47,109 - mmcls - INFO - Epoch [3][220/274]	lr: 1.000e-02, eta: 0:31:53, time: 0.250, data_time: 0.001, memory: 1280, loss: 0.9662
+2022-03-29 08:32:52,104 - mmcls - INFO - Epoch [3][240/274]	lr: 1.000e-02, eta: 0:31:46, time: 0.250, data_time: 0.000, memory: 1280, loss: 1.1967
+2022-03-29 08:32:57,102 - mmcls - INFO - Epoch [3][260/274]	lr: 1.000e-02, eta: 0:31:40, time: 0.250, data_time: 0.000, memory: 1280, loss: 0.9493
+2022-03-29 08:33:00,465 - mmcls - INFO - Saving checkpoint at 3 epochs
+2022-03-29 08:33:16,950 - mmcls - INFO - Epoch(val) [3][60]	accuracy_top-1: 97.5132, accuracy_top-5: 99.8413, precision: 97.5273, recall: 97.5132, f1_score: 97.5061
+2022-03-29 08:33:24,395 - mmcls - INFO - Epoch [4][20/274]	lr: 1.000e-02, eta: 0:31:20, time: 0.372, data_time: 0.121, memory: 1280, loss: 0.9875
+2022-03-29 08:33:29,412 - mmcls - INFO - Epoch [4][40/274]	lr: 1.000e-02, eta: 0:31:14, time: 0.251, data_time: 0.000, memory: 1280, loss: 1.1489
+2022-03-29 08:33:34,447 - mmcls - INFO - Epoch [4][60/274]	lr: 1.000e-02, eta: 0:31:09, time: 0.252, data_time: 0.001, memory: 1280, loss: 0.9385
+2022-03-29 08:33:39,490 - mmcls - INFO - Epoch [4][80/274]	lr: 1.000e-02, eta: 0:31:03, time: 0.252, data_time: 0.002, memory: 1280, loss: 0.8411
+2022-03-29 08:33:44,489 - mmcls - INFO - Epoch [4][100/274]	lr: 1.000e-02, eta: 0:30:57, time: 0.250, data_time: 0.000, memory: 1280, loss: 0.9809
+2022-03-29 08:33:49,499 - mmcls - INFO - Epoch [4][120/274]	lr: 1.000e-02, eta: 0:30:51, time: 0.251, data_time: 0.000, memory: 1280, loss: 0.9613
+2022-03-29 08:33:54,521 - mmcls - INFO - Epoch [4][140/274]	lr: 1.000e-02, eta: 0:30:46, time: 0.251, data_time: 0.000, memory: 1280, loss: 0.7999
+2022-03-29 08:33:59,540 - mmcls - INFO - Epoch [4][160/274]	lr: 1.000e-02, eta: 0:30:40, time: 0.251, data_time: 0.001, memory: 1280, loss: 0.8044
+2022-03-29 08:34:04,587 - mmcls - INFO - Epoch [4][180/274]	lr: 1.000e-02, eta: 0:30:35, time: 0.252, data_time: 0.000, memory: 1280, loss: 0.9516
+2022-03-29 08:34:09,616 - mmcls - INFO - Epoch [4][200/274]	lr: 1.000e-02, eta: 0:30:29, time: 0.251, data_time: 0.000, memory: 1280, loss: 0.9611
+2022-03-29 08:34:14,633 - mmcls - INFO - Epoch [4][220/274]	lr: 1.000e-02, eta: 0:30:24, time: 0.251, data_time: 0.000, memory: 1280, loss: 1.0991
+2022-03-29 08:34:19,652 - mmcls - INFO - Epoch [4][240/274]	lr: 1.000e-02, eta: 0:30:18, time: 0.251, data_time: 0.000, memory: 1280, loss: 0.8928
+2022-03-29 08:34:24,682 - mmcls - INFO - Epoch [4][260/274]	lr: 1.000e-02, eta: 0:30:13, time: 0.251, data_time: 0.000, memory: 1280, loss: 0.9552
+2022-03-29 08:34:28,054 - mmcls - INFO - Saving checkpoint at 4 epochs
+2022-03-29 08:34:44,507 - mmcls - INFO - Epoch(val) [4][60]	accuracy_top-1: 97.3016, accuracy_top-5: 99.8413, precision: 97.3130, recall: 97.3016, f1_score: 97.2867
+2022-03-29 08:34:51,947 - mmcls - INFO - Epoch [5][20/274]	lr: 1.000e-02, eta: 0:29:57, time: 0.371, data_time: 0.120, memory: 1280, loss: 1.2152
+2022-03-29 08:34:56,960 - mmcls - INFO - Epoch [5][40/274]	lr: 1.000e-02, eta: 0:29:51, time: 0.251, data_time: 0.000, memory: 1280, loss: 1.0994
+2022-03-29 08:35:02,012 - mmcls - INFO - Epoch [5][60/274]	lr: 1.000e-02, eta: 0:29:46, time: 0.253, data_time: 0.002, memory: 1280, loss: 1.1500
+2022-03-29 08:35:07,242 - mmcls - INFO - Epoch [5][80/274]	lr: 1.000e-02, eta: 0:29:42, time: 0.261, data_time: 0.001, memory: 1280, loss: 0.9904
+2022-03-29 08:35:12,600 - mmcls - INFO - Epoch [5][100/274]	lr: 1.000e-02, eta: 0:29:39, time: 0.268, data_time: 0.001, memory: 1280, loss: 1.0447
+2022-03-29 08:35:17,603 - mmcls - INFO - Epoch [5][120/274]	lr: 1.000e-02, eta: 0:29:33, time: 0.250, data_time: 0.000, memory: 1280, loss: 0.8666
+2022-03-29 08:35:22,603 - mmcls - INFO - Epoch [5][140/274]	lr: 1.000e-02, eta: 0:29:28, time: 0.250, data_time: 0.000, memory: 1280, loss: 0.8973
+2022-03-29 08:35:27,616 - mmcls - INFO - Epoch [5][160/274]	lr: 1.000e-02, eta: 0:29:23, time: 0.251, data_time: 0.000, memory: 1280, loss: 0.9665
+2022-03-29 08:35:32,661 - mmcls - INFO - Epoch [5][180/274]	lr: 1.000e-02, eta: 0:29:17, time: 0.252, data_time: 0.000, memory: 1280, loss: 0.9280
+2022-03-29 08:35:37,715 - mmcls - INFO - Epoch [5][200/274]	lr: 1.000e-02, eta: 0:29:12, time: 0.253, data_time: 0.000, memory: 1280, loss: 0.8396
+2022-03-29 08:35:42,781 - mmcls - INFO - Epoch [5][220/274]	lr: 1.000e-02, eta: 0:29:07, time: 0.253, data_time: 0.000, memory: 1280, loss: 0.8214
+2022-03-29 08:35:47,832 - mmcls - INFO - Epoch [5][240/274]	lr: 1.000e-02, eta: 0:29:02, time: 0.253, data_time: 0.000, memory: 1280, loss: 0.9372
+2022-03-29 08:35:52,852 - mmcls - INFO - Epoch [5][260/274]	lr: 1.000e-02, eta: 0:28:57, time: 0.251, data_time: 0.000, memory: 1280, loss: 0.8772
+2022-03-29 08:35:56,218 - mmcls - INFO - Saving checkpoint at 5 epochs
+2022-03-29 08:36:12,596 - mmcls - INFO - Epoch(val) [5][60]	accuracy_top-1: 97.3016, accuracy_top-5: 99.8942, precision: 97.3558, recall: 97.3016, f1_score: 97.2976
+2022-03-29 08:36:20,022 - mmcls - INFO - Epoch [6][20/274]	lr: 1.000e-02, eta: 0:28:42, time: 0.371, data_time: 0.120, memory: 1280, loss: 0.9848
+2022-03-29 08:36:25,022 - mmcls - INFO - Epoch [6][40/274]	lr: 1.000e-02, eta: 0:28:37, time: 0.250, data_time: 0.001, memory: 1280, loss: 1.0232
+2022-03-29 08:36:30,057 - mmcls - INFO - Epoch [6][60/274]	lr: 1.000e-02, eta: 0:28:32, time: 0.252, data_time: 0.000, memory: 1280, loss: 0.9949
+2022-03-29 08:36:35,068 - mmcls - INFO - Epoch [6][80/274]	lr: 1.000e-02, eta: 0:28:27, time: 0.250, data_time: 0.001, memory: 1280, loss: 0.8072
+2022-03-29 08:36:40,316 - mmcls - INFO - Epoch [6][100/274]	lr: 1.000e-02, eta: 0:28:23, time: 0.262, data_time: 0.001, memory: 1280, loss: 0.7790
+2022-03-29 08:36:45,749 - mmcls - INFO - Epoch [6][120/274]	lr: 1.000e-02, eta: 0:28:19, time: 0.272, data_time: 0.001, memory: 1280, loss: 0.8408
+2022-03-29 08:36:51,857 - mmcls - INFO - Epoch [6][140/274]	lr: 1.000e-02, eta: 0:28:19, time: 0.305, data_time: 0.000, memory: 1280, loss: 0.9086
+2022-03-29 08:37:02,689 - mmcls - INFO - Epoch [6][160/274]	lr: 1.000e-02, eta: 0:28:39, time: 0.542, data_time: 0.001, memory: 1280, loss: 0.8659
+2022-03-29 08:37:13,480 - mmcls - INFO - Epoch [6][180/274]	lr: 1.000e-02, eta: 0:28:58, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.8616
+2022-03-29 08:37:24,277 - mmcls - INFO - Epoch [6][200/274]	lr: 1.000e-02, eta: 0:29:17, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.9569
+2022-03-29 08:37:34,520 - mmcls - INFO - Epoch [6][220/274]	lr: 1.000e-02, eta: 0:29:32, time: 0.512, data_time: 0.001, memory: 1280, loss: 0.8767
+2022-03-29 08:37:39,547 - mmcls - INFO - Epoch [6][240/274]	lr: 1.000e-02, eta: 0:29:26, time: 0.252, data_time: 0.001, memory: 1280, loss: 0.7778
+2022-03-29 08:37:44,581 - mmcls - INFO - Epoch [6][260/274]	lr: 1.000e-02, eta: 0:29:19, time: 0.252, data_time: 0.000, memory: 1280, loss: 0.9586
+2022-03-29 08:37:47,949 - mmcls - INFO - Saving checkpoint at 6 epochs
+2022-03-29 08:38:04,304 - mmcls - INFO - Epoch(val) [6][60]	accuracy_top-1: 97.1958, accuracy_top-5: 99.6825, precision: 97.2259, recall: 97.1958, f1_score: 97.1883
+2022-03-29 08:38:11,713 - mmcls - INFO - Epoch [7][20/274]	lr: 1.000e-02, eta: 0:29:03, time: 0.370, data_time: 0.121, memory: 1280, loss: 0.9510
+2022-03-29 08:38:16,743 - mmcls - INFO - Epoch [7][40/274]	lr: 1.000e-02, eta: 0:28:57, time: 0.252, data_time: 0.002, memory: 1280, loss: 0.9242
+2022-03-29 08:38:21,763 - mmcls - INFO - Epoch [7][60/274]	lr: 1.000e-02, eta: 0:28:50, time: 0.251, data_time: 0.000, memory: 1280, loss: 0.8788
+2022-03-29 08:38:27,222 - mmcls - INFO - Epoch [7][80/274]	lr: 1.000e-02, eta: 0:28:46, time: 0.273, data_time: 0.001, memory: 1280, loss: 0.8807
+2022-03-29 08:38:32,608 - mmcls - INFO - Epoch [7][100/274]	lr: 1.000e-02, eta: 0:28:41, time: 0.269, data_time: 0.000, memory: 1280, loss: 0.8718
+2022-03-29 08:38:41,116 - mmcls - INFO - Epoch [7][120/274]	lr: 1.000e-02, eta: 0:28:47, time: 0.425, data_time: 0.000, memory: 1280, loss: 0.9872
+2022-03-29 08:38:51,938 - mmcls - INFO - Epoch [7][140/274]	lr: 1.000e-02, eta: 0:29:01, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.9745
+2022-03-29 08:39:02,727 - mmcls - INFO - Epoch [7][160/274]	lr: 1.000e-02, eta: 0:29:15, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.9512
+2022-03-29 08:39:13,576 - mmcls - INFO - Epoch [7][180/274]	lr: 1.000e-02, eta: 0:29:28, time: 0.542, data_time: 0.001, memory: 1280, loss: 0.8245
+2022-03-29 08:39:24,368 - mmcls - INFO - Epoch [7][200/274]	lr: 1.000e-02, eta: 0:29:41, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.7906
+2022-03-29 08:39:35,185 - mmcls - INFO - Epoch [7][220/274]	lr: 1.000e-02, eta: 0:29:53, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.9452
+2022-03-29 08:39:45,976 - mmcls - INFO - Epoch [7][240/274]	lr: 1.000e-02, eta: 0:30:05, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.9407
+2022-03-29 08:39:56,780 - mmcls - INFO - Epoch [7][260/274]	lr: 1.000e-02, eta: 0:30:16, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.8922
+2022-03-29 08:40:03,988 - mmcls - INFO - Saving checkpoint at 7 epochs
+2022-03-29 08:40:36,612 - mmcls - INFO - Epoch(val) [7][60]	accuracy_top-1: 97.3545, accuracy_top-5: 99.8942, precision: 97.3752, recall: 97.3545, f1_score: 97.3510
+2022-03-29 08:40:49,787 - mmcls - INFO - Epoch [8][20/274]	lr: 1.000e-02, eta: 0:30:17, time: 0.657, data_time: 0.119, memory: 1280, loss: 0.9012
+2022-03-29 08:41:00,573 - mmcls - INFO - Epoch [8][40/274]	lr: 1.000e-02, eta: 0:30:28, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.8765
+2022-03-29 08:41:11,380 - mmcls - INFO - Epoch [8][60/274]	lr: 1.000e-02, eta: 0:30:37, time: 0.540, data_time: 0.001, memory: 1280, loss: 1.0366
+2022-03-29 08:41:22,164 - mmcls - INFO - Epoch [8][80/274]	lr: 1.000e-02, eta: 0:30:47, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.9341
+2022-03-29 08:41:32,963 - mmcls - INFO - Epoch [8][100/274]	lr: 1.000e-02, eta: 0:30:56, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.9486
+2022-03-29 08:41:41,579 - mmcls - INFO - Epoch [8][120/274]	lr: 1.000e-02, eta: 0:30:58, time: 0.431, data_time: 0.001, memory: 1280, loss: 0.8397
+2022-03-29 08:41:51,835 - mmcls - INFO - Epoch [8][140/274]	lr: 1.000e-02, eta: 0:31:04, time: 0.512, data_time: 0.000, memory: 1280, loss: 0.8502
+2022-03-29 08:42:02,899 - mmcls - INFO - Epoch [8][160/274]	lr: 1.000e-02, eta: 0:31:13, time: 0.553, data_time: 0.001, memory: 1280, loss: 0.8607
+2022-03-29 08:42:13,892 - mmcls - INFO - Epoch [8][180/274]	lr: 1.000e-02, eta: 0:31:21, time: 0.550, data_time: 0.001, memory: 1280, loss: 0.8235
+2022-03-29 08:42:21,860 - mmcls - INFO - Epoch [8][200/274]	lr: 1.000e-02, eta: 0:31:20, time: 0.398, data_time: 0.001, memory: 1280, loss: 0.9121
+2022-03-29 08:42:32,652 - mmcls - INFO - Epoch [8][220/274]	lr: 1.000e-02, eta: 0:31:27, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.9972
+2022-03-29 08:42:43,466 - mmcls - INFO - Epoch [8][240/274]	lr: 1.000e-02, eta: 0:31:34, time: 0.540, data_time: 0.000, memory: 1280, loss: 0.8122
+2022-03-29 08:42:54,230 - mmcls - INFO - Epoch [8][260/274]	lr: 1.000e-02, eta: 0:31:40, time: 0.538, data_time: 0.001, memory: 1280, loss: 1.0585
+2022-03-29 08:43:01,454 - mmcls - INFO - Saving checkpoint at 8 epochs
+2022-03-29 08:43:34,211 - mmcls - INFO - Epoch(val) [8][60]	accuracy_top-1: 97.2487, accuracy_top-5: 100.0000, precision: 97.2689, recall: 97.2487, f1_score: 97.2381
+2022-03-29 08:43:47,418 - mmcls - INFO - Epoch [9][20/274]	lr: 1.000e-02, eta: 0:31:36, time: 0.659, data_time: 0.120, memory: 1280, loss: 0.9832
+2022-03-29 08:43:58,218 - mmcls - INFO - Epoch [9][40/274]	lr: 1.000e-02, eta: 0:31:42, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.8574
+2022-03-29 08:44:08,998 - mmcls - INFO - Epoch [9][60/274]	lr: 1.000e-02, eta: 0:31:48, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.8111
+2022-03-29 08:44:19,806 - mmcls - INFO - Epoch [9][80/274]	lr: 1.000e-02, eta: 0:31:53, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.9244
+2022-03-29 08:44:30,597 - mmcls - INFO - Epoch [9][100/274]	lr: 1.000e-02, eta: 0:31:58, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.8694
+2022-03-29 08:44:41,369 - mmcls - INFO - Epoch [9][120/274]	lr: 1.000e-02, eta: 0:32:02, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.7388
+2022-03-29 08:44:52,120 - mmcls - INFO - Epoch [9][140/274]	lr: 1.000e-02, eta: 0:32:06, time: 0.537, data_time: 0.001, memory: 1280, loss: 0.9650
+2022-03-29 08:45:02,928 - mmcls - INFO - Epoch [9][160/274]	lr: 1.000e-02, eta: 0:32:10, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.8688
+2022-03-29 08:45:13,725 - mmcls - INFO - Epoch [9][180/274]	lr: 1.000e-02, eta: 0:32:14, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.9687
+2022-03-29 08:45:23,926 - mmcls - INFO - Epoch [9][200/274]	lr: 1.000e-02, eta: 0:32:16, time: 0.511, data_time: 0.001, memory: 1280, loss: 0.9235
+2022-03-29 08:45:32,481 - mmcls - INFO - Epoch [9][220/274]	lr: 1.000e-02, eta: 0:32:14, time: 0.427, data_time: 0.000, memory: 1280, loss: 0.9516
+2022-03-29 08:45:43,538 - mmcls - INFO - Epoch [9][240/274]	lr: 1.000e-02, eta: 0:32:18, time: 0.553, data_time: 0.001, memory: 1280, loss: 0.8331
+2022-03-29 08:45:54,555 - mmcls - INFO - Epoch [9][260/274]	lr: 1.000e-02, eta: 0:32:22, time: 0.551, data_time: 0.001, memory: 1280, loss: 0.8342
+2022-03-29 08:46:00,910 - mmcls - INFO - Saving checkpoint at 9 epochs
+2022-03-29 08:46:33,697 - mmcls - INFO - Epoch(val) [9][60]	accuracy_top-1: 97.0899, accuracy_top-5: 99.9471, precision: 97.1322, recall: 97.0899, f1_score: 97.0826
+2022-03-29 08:46:46,936 - mmcls - INFO - Epoch [10][20/274]	lr: 1.000e-02, eta: 0:32:14, time: 0.661, data_time: 0.120, memory: 1280, loss: 0.8506
+2022-03-29 08:46:57,727 - mmcls - INFO - Epoch [10][40/274]	lr: 1.000e-02, eta: 0:32:17, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.8918
+2022-03-29 08:47:08,567 - mmcls - INFO - Epoch [10][60/274]	lr: 1.000e-02, eta: 0:32:19, time: 0.542, data_time: 0.001, memory: 1280, loss: 0.8467
+2022-03-29 08:47:19,319 - mmcls - INFO - Epoch [10][80/274]	lr: 1.000e-02, eta: 0:32:21, time: 0.537, data_time: 0.001, memory: 1280, loss: 0.8789
+2022-03-29 08:47:30,111 - mmcls - INFO - Epoch [10][100/274]	lr: 1.000e-02, eta: 0:32:23, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.8311
+2022-03-29 08:47:40,896 - mmcls - INFO - Epoch [10][120/274]	lr: 1.000e-02, eta: 0:32:24, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.9572
+2022-03-29 08:47:51,705 - mmcls - INFO - Epoch [10][140/274]	lr: 1.000e-02, eta: 0:32:26, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.9707
+2022-03-29 08:48:02,516 - mmcls - INFO - Epoch [10][160/274]	lr: 1.000e-02, eta: 0:32:27, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.8927
+2022-03-29 08:48:13,300 - mmcls - INFO - Epoch [10][180/274]	lr: 1.000e-02, eta: 0:32:28, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.9955
+2022-03-29 08:48:24,110 - mmcls - INFO - Epoch [10][200/274]	lr: 1.000e-02, eta: 0:32:29, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.9075
+2022-03-29 08:48:34,894 - mmcls - INFO - Epoch [10][220/274]	lr: 1.000e-02, eta: 0:32:30, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.9384
+2022-03-29 08:48:45,705 - mmcls - INFO - Epoch [10][240/274]	lr: 1.000e-02, eta: 0:32:31, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.8954
+2022-03-29 08:48:56,482 - mmcls - INFO - Epoch [10][260/274]	lr: 1.000e-02, eta: 0:32:31, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.9664
+2022-03-29 08:49:03,685 - mmcls - INFO - Saving checkpoint at 10 epochs
+2022-03-29 08:49:34,067 - mmcls - INFO - Epoch(val) [10][60]	accuracy_top-1: 97.7778, accuracy_top-5: 99.9471, precision: 97.8003, recall: 97.7778, f1_score: 97.7646
+2022-03-29 08:49:44,453 - mmcls - INFO - Epoch [11][20/274]	lr: 1.000e-02, eta: 0:32:16, time: 0.518, data_time: 0.114, memory: 1280, loss: 0.9220
+2022-03-29 08:49:55,275 - mmcls - INFO - Epoch [11][40/274]	lr: 1.000e-02, eta: 0:32:16, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.9179
+2022-03-29 08:50:06,057 - mmcls - INFO - Epoch [11][60/274]	lr: 1.000e-02, eta: 0:32:16, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.7808
+2022-03-29 08:50:16,863 - mmcls - INFO - Epoch [11][80/274]	lr: 1.000e-02, eta: 0:32:16, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.8323
+2022-03-29 08:50:27,638 - mmcls - INFO - Epoch [11][100/274]	lr: 1.000e-02, eta: 0:32:15, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.8871
+2022-03-29 08:50:38,454 - mmcls - INFO - Epoch [11][120/274]	lr: 1.000e-02, eta: 0:32:15, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.9231
+2022-03-29 08:50:49,229 - mmcls - INFO - Epoch [11][140/274]	lr: 1.000e-02, eta: 0:32:14, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.8624
+2022-03-29 08:51:00,043 - mmcls - INFO - Epoch [11][160/274]	lr: 1.000e-02, eta: 0:32:14, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.8896
+2022-03-29 08:51:10,794 - mmcls - INFO - Epoch [11][180/274]	lr: 1.000e-02, eta: 0:32:13, time: 0.538, data_time: 0.001, memory: 1280, loss: 1.0231
+2022-03-29 08:51:21,603 - mmcls - INFO - Epoch [11][200/274]	lr: 1.000e-02, eta: 0:32:12, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.8430
+2022-03-29 08:51:32,386 - mmcls - INFO - Epoch [11][220/274]	lr: 1.000e-02, eta: 0:32:10, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.9465
+2022-03-29 08:51:43,199 - mmcls - INFO - Epoch [11][240/274]	lr: 1.000e-02, eta: 0:32:09, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.8654
+2022-03-29 08:51:53,989 - mmcls - INFO - Epoch [11][260/274]	lr: 1.000e-02, eta: 0:32:08, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.7996
+2022-03-29 08:52:01,221 - mmcls - INFO - Saving checkpoint at 11 epochs
+2022-03-29 08:52:34,001 - mmcls - INFO - Epoch(val) [11][60]	accuracy_top-1: 97.4603, accuracy_top-5: 100.0000, precision: 97.4788, recall: 97.4603, f1_score: 97.4566
+2022-03-29 08:52:47,265 - mmcls - INFO - Epoch [12][20/274]	lr: 1.000e-02, eta: 0:31:56, time: 0.661, data_time: 0.119, memory: 1280, loss: 0.9492
+2022-03-29 08:52:55,175 - mmcls - INFO - Epoch [12][40/274]	lr: 1.000e-02, eta: 0:31:50, time: 0.396, data_time: 0.002, memory: 1280, loss: 0.8642
+2022-03-29 08:53:06,250 - mmcls - INFO - Epoch [12][60/274]	lr: 1.000e-02, eta: 0:31:49, time: 0.554, data_time: 0.001, memory: 1280, loss: 1.1942
+2022-03-29 08:53:17,338 - mmcls - INFO - Epoch [12][80/274]	lr: 1.000e-02, eta: 0:31:47, time: 0.554, data_time: 0.001, memory: 1280, loss: 1.0326
+2022-03-29 08:53:26,132 - mmcls - INFO - Epoch [12][100/274]	lr: 1.000e-02, eta: 0:31:42, time: 0.440, data_time: 0.001, memory: 1280, loss: 0.9698
+2022-03-29 08:53:36,209 - mmcls - INFO - Epoch [12][120/274]	lr: 1.000e-02, eta: 0:31:39, time: 0.503, data_time: 0.000, memory: 1280, loss: 0.9753
+2022-03-29 08:53:46,984 - mmcls - INFO - Epoch [12][140/274]	lr: 1.000e-02, eta: 0:31:37, time: 0.539, data_time: 0.001, memory: 1280, loss: 1.0902
+2022-03-29 08:53:57,803 - mmcls - INFO - Epoch [12][160/274]	lr: 1.000e-02, eta: 0:31:34, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.8668
+2022-03-29 08:54:08,588 - mmcls - INFO - Epoch [12][180/274]	lr: 1.000e-02, eta: 0:31:32, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.8897
+2022-03-29 08:54:19,421 - mmcls - INFO - Epoch [12][200/274]	lr: 1.000e-02, eta: 0:31:30, time: 0.542, data_time: 0.001, memory: 1280, loss: 0.9846
+2022-03-29 08:54:30,191 - mmcls - INFO - Epoch [12][220/274]	lr: 1.000e-02, eta: 0:31:27, time: 0.538, data_time: 0.001, memory: 1280, loss: 0.8386
+2022-03-29 08:54:40,998 - mmcls - INFO - Epoch [12][240/274]	lr: 1.000e-02, eta: 0:31:25, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.8585
+2022-03-29 08:54:51,795 - mmcls - INFO - Epoch [12][260/274]	lr: 1.000e-02, eta: 0:31:22, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.9021
+2022-03-29 08:54:59,030 - mmcls - INFO - Saving checkpoint at 12 epochs
+2022-03-29 08:55:31,933 - mmcls - INFO - Epoch(val) [12][60]	accuracy_top-1: 97.4074, accuracy_top-5: 100.0000, precision: 97.4201, recall: 97.4074, f1_score: 97.3923
+2022-03-29 08:55:45,120 - mmcls - INFO - Epoch [13][20/274]	lr: 1.000e-02, eta: 0:31:09, time: 0.658, data_time: 0.120, memory: 1280, loss: 0.9094
+2022-03-29 08:55:55,948 - mmcls - INFO - Epoch [13][40/274]	lr: 1.000e-02, eta: 0:31:06, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.7145
+2022-03-29 08:56:06,735 - mmcls - INFO - Epoch [13][60/274]	lr: 1.000e-02, eta: 0:31:03, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.7820
+2022-03-29 08:56:17,545 - mmcls - INFO - Epoch [13][80/274]	lr: 1.000e-02, eta: 0:31:00, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.8681
+2022-03-29 08:56:28,361 - mmcls - INFO - Epoch [13][100/274]	lr: 1.000e-02, eta: 0:30:57, time: 0.541, data_time: 0.001, memory: 1280, loss: 1.0658
+2022-03-29 08:56:36,469 - mmcls - INFO - Epoch [13][120/274]	lr: 1.000e-02, eta: 0:30:50, time: 0.405, data_time: 0.002, memory: 1280, loss: 0.9312
+2022-03-29 08:56:47,519 - mmcls - INFO - Epoch [13][140/274]	lr: 1.000e-02, eta: 0:30:47, time: 0.553, data_time: 0.001, memory: 1280, loss: 1.0483
+2022-03-29 08:56:58,552 - mmcls - INFO - Epoch [13][160/274]	lr: 1.000e-02, eta: 0:30:44, time: 0.552, data_time: 0.001, memory: 1280, loss: 0.8777
+2022-03-29 08:57:08,411 - mmcls - INFO - Epoch [13][180/274]	lr: 1.000e-02, eta: 0:30:39, time: 0.493, data_time: 0.001, memory: 1280, loss: 0.8260
+2022-03-29 08:57:17,445 - mmcls - INFO - Epoch [13][200/274]	lr: 1.000e-02, eta: 0:30:33, time: 0.451, data_time: 0.002, memory: 1280, loss: 0.9686
+2022-03-29 08:57:28,221 - mmcls - INFO - Epoch [13][220/274]	lr: 1.000e-02, eta: 0:30:29, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.8367
+2022-03-29 08:57:39,030 - mmcls - INFO - Epoch [13][240/274]	lr: 1.000e-02, eta: 0:30:26, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.9781
+2022-03-29 08:57:49,826 - mmcls - INFO - Epoch [13][260/274]	lr: 1.000e-02, eta: 0:30:22, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.7942
+2022-03-29 08:57:57,022 - mmcls - INFO - Saving checkpoint at 13 epochs
+2022-03-29 08:58:29,854 - mmcls - INFO - Epoch(val) [13][60]	accuracy_top-1: 97.4074, accuracy_top-5: 99.8413, precision: 97.4307, recall: 97.4074, f1_score: 97.4012
+2022-03-29 08:58:43,107 - mmcls - INFO - Epoch [14][20/274]	lr: 1.000e-02, eta: 0:30:08, time: 0.661, data_time: 0.120, memory: 1280, loss: 0.9717
+2022-03-29 08:58:53,919 - mmcls - INFO - Epoch [14][40/274]	lr: 1.000e-02, eta: 0:30:04, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.8550
+2022-03-29 08:59:04,723 - mmcls - INFO - Epoch [14][60/274]	lr: 1.000e-02, eta: 0:30:00, time: 0.540, data_time: 0.001, memory: 1280, loss: 1.0557
+2022-03-29 08:59:15,513 - mmcls - INFO - Epoch [14][80/274]	lr: 1.000e-02, eta: 0:29:56, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.8143
+2022-03-29 08:59:26,316 - mmcls - INFO - Epoch [14][100/274]	lr: 1.000e-02, eta: 0:29:52, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.8280
+2022-03-29 08:59:37,173 - mmcls - INFO - Epoch [14][120/274]	lr: 1.000e-02, eta: 0:29:48, time: 0.543, data_time: 0.001, memory: 1280, loss: 0.7396
+2022-03-29 08:59:47,972 - mmcls - INFO - Epoch [14][140/274]	lr: 1.000e-02, eta: 0:29:44, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.7639
+2022-03-29 08:59:58,785 - mmcls - INFO - Epoch [14][160/274]	lr: 1.000e-02, eta: 0:29:39, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.9783
+2022-03-29 09:00:09,610 - mmcls - INFO - Epoch [14][180/274]	lr: 1.000e-02, eta: 0:29:35, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.8229
+2022-03-29 09:00:17,685 - mmcls - INFO - Epoch [14][200/274]	lr: 1.000e-02, eta: 0:29:27, time: 0.404, data_time: 0.001, memory: 1280, loss: 0.9900
+2022-03-29 09:00:28,788 - mmcls - INFO - Epoch [14][220/274]	lr: 1.000e-02, eta: 0:29:23, time: 0.555, data_time: 0.001, memory: 1280, loss: 0.7646
+2022-03-29 09:00:39,877 - mmcls - INFO - Epoch [14][240/274]	lr: 1.000e-02, eta: 0:29:19, time: 0.554, data_time: 0.001, memory: 1280, loss: 0.8556
+2022-03-29 09:00:50,848 - mmcls - INFO - Epoch [14][260/274]	lr: 1.000e-02, eta: 0:29:14, time: 0.549, data_time: 0.001, memory: 1280, loss: 0.8532
+2022-03-29 09:00:55,342 - mmcls - INFO - Saving checkpoint at 14 epochs
+2022-03-29 09:01:28,210 - mmcls - INFO - Epoch(val) [14][60]	accuracy_top-1: 97.5661, accuracy_top-5: 100.0000, precision: 97.6182, recall: 97.5661, f1_score: 97.5718
+2022-03-29 09:01:41,439 - mmcls - INFO - Epoch [15][20/274]	lr: 1.000e-02, eta: 0:29:00, time: 0.660, data_time: 0.120, memory: 1280, loss: 0.7657
+2022-03-29 09:01:52,271 - mmcls - INFO - Epoch [15][40/274]	lr: 1.000e-02, eta: 0:28:55, time: 0.542, data_time: 0.001, memory: 1280, loss: 0.8426
+2022-03-29 09:02:03,071 - mmcls - INFO - Epoch [15][60/274]	lr: 1.000e-02, eta: 0:28:50, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.9615
+2022-03-29 09:02:13,862 - mmcls - INFO - Epoch [15][80/274]	lr: 1.000e-02, eta: 0:28:46, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.8358
+2022-03-29 09:02:24,658 - mmcls - INFO - Epoch [15][100/274]	lr: 1.000e-02, eta: 0:28:41, time: 0.539, data_time: 0.001, memory: 1280, loss: 1.0172
+2022-03-29 09:02:35,447 - mmcls - INFO - Epoch [15][120/274]	lr: 1.000e-02, eta: 0:28:35, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.9209
+2022-03-29 09:02:46,246 - mmcls - INFO - Epoch [15][140/274]	lr: 1.000e-02, eta: 0:28:30, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.8436
+2022-03-29 09:02:57,035 - mmcls - INFO - Epoch [15][160/274]	lr: 1.000e-02, eta: 0:28:25, time: 0.539, data_time: 0.001, memory: 1280, loss: 1.0386
+2022-03-29 09:03:07,889 - mmcls - INFO - Epoch [15][180/274]	lr: 1.000e-02, eta: 0:28:20, time: 0.543, data_time: 0.001, memory: 1280, loss: 0.8638
+2022-03-29 09:03:18,710 - mmcls - INFO - Epoch [15][200/274]	lr: 1.000e-02, eta: 0:28:15, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.9673
+2022-03-29 09:03:29,541 - mmcls - INFO - Epoch [15][220/274]	lr: 1.000e-02, eta: 0:28:09, time: 0.542, data_time: 0.001, memory: 1280, loss: 0.8662
+2022-03-29 09:03:40,369 - mmcls - INFO - Epoch [15][240/274]	lr: 1.000e-02, eta: 0:28:04, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.8976
+2022-03-29 09:03:51,148 - mmcls - INFO - Epoch [15][260/274]	lr: 1.000e-02, eta: 0:27:59, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.8987
+2022-03-29 09:03:57,861 - mmcls - INFO - Saving checkpoint at 15 epochs
+2022-03-29 09:04:31,364 - mmcls - INFO - Epoch(val) [15][60]	accuracy_top-1: 97.7249, accuracy_top-5: 99.9471, precision: 97.7505, recall: 97.7249, f1_score: 97.7287
+2022-03-29 09:04:43,046 - mmcls - INFO - Epoch [16][20/274]	lr: 1.000e-03, eta: 0:27:43, time: 0.583, data_time: 0.117, memory: 1280, loss: 0.9142
+2022-03-29 09:04:53,813 - mmcls - INFO - Epoch [16][40/274]	lr: 1.000e-03, eta: 0:27:37, time: 0.538, data_time: 0.001, memory: 1280, loss: 0.8922
+2022-03-29 09:05:04,638 - mmcls - INFO - Epoch [16][60/274]	lr: 1.000e-03, eta: 0:27:32, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.7907
+2022-03-29 09:05:15,436 - mmcls - INFO - Epoch [16][80/274]	lr: 1.000e-03, eta: 0:27:26, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.8545
+2022-03-29 09:05:26,238 - mmcls - INFO - Epoch [16][100/274]	lr: 1.000e-03, eta: 0:27:20, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.9541
+2022-03-29 09:05:37,058 - mmcls - INFO - Epoch [16][120/274]	lr: 1.000e-03, eta: 0:27:15, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.8896
+2022-03-29 09:05:47,861 - mmcls - INFO - Epoch [16][140/274]	lr: 1.000e-03, eta: 0:27:09, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.8838
+2022-03-29 09:05:58,703 - mmcls - INFO - Epoch [16][160/274]	lr: 1.000e-03, eta: 0:27:03, time: 0.542, data_time: 0.001, memory: 1280, loss: 0.7355
+2022-03-29 09:06:09,552 - mmcls - INFO - Epoch [16][180/274]	lr: 1.000e-03, eta: 0:26:57, time: 0.542, data_time: 0.001, memory: 1280, loss: 1.0651
+2022-03-29 09:06:20,357 - mmcls - INFO - Epoch [16][200/274]	lr: 1.000e-03, eta: 0:26:51, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.8624
+2022-03-29 09:06:31,174 - mmcls - INFO - Epoch [16][220/274]	lr: 1.000e-03, eta: 0:26:45, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.8812
+2022-03-29 09:06:41,958 - mmcls - INFO - Epoch [16][240/274]	lr: 1.000e-03, eta: 0:26:39, time: 0.539, data_time: 0.001, memory: 1280, loss: 0.9557
+2022-03-29 09:06:52,779 - mmcls - INFO - Epoch [16][260/274]	lr: 1.000e-03, eta: 0:26:33, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.9745
+2022-03-29 09:06:59,979 - mmcls - INFO - Saving checkpoint at 16 epochs
+2022-03-29 09:07:32,774 - mmcls - INFO - Epoch(val) [16][60]	accuracy_top-1: 97.4074, accuracy_top-5: 99.9471, precision: 97.4169, recall: 97.4074, f1_score: 97.4005
+2022-03-29 09:07:43,253 - mmcls - INFO - Epoch [17][20/274]	lr: 1.000e-03, eta: 0:26:16, time: 0.523, data_time: 0.120, memory: 1280, loss: 0.9211
+2022-03-29 09:07:54,344 - mmcls - INFO - Epoch [17][40/274]	lr: 1.000e-03, eta: 0:26:10, time: 0.554, data_time: 0.001, memory: 1280, loss: 0.8331
+2022-03-29 09:08:05,441 - mmcls - INFO - Epoch [17][60/274]	lr: 1.000e-03, eta: 0:26:04, time: 0.555, data_time: 0.001, memory: 1280, loss: 0.8646
+2022-03-29 09:08:15,975 - mmcls - INFO - Epoch [17][80/274]	lr: 1.000e-03, eta: 0:25:58, time: 0.527, data_time: 0.001, memory: 1280, loss: 0.9605
+2022-03-29 09:08:24,488 - mmcls - INFO - Epoch [17][100/274]	lr: 1.000e-03, eta: 0:25:50, time: 0.425, data_time: 0.000, memory: 1280, loss: 0.7949
+2022-03-29 09:08:35,319 - mmcls - INFO - Epoch [17][120/274]	lr: 1.000e-03, eta: 0:25:44, time: 0.542, data_time: 0.001, memory: 1280, loss: 0.9809
+2022-03-29 09:08:46,188 - mmcls - INFO - Epoch [17][140/274]	lr: 1.000e-03, eta: 0:25:37, time: 0.543, data_time: 0.001, memory: 1280, loss: 0.7855
+2022-03-29 09:08:56,999 - mmcls - INFO - Epoch [17][160/274]	lr: 1.000e-03, eta: 0:25:31, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.8527
+2022-03-29 09:09:07,817 - mmcls - INFO - Epoch [17][180/274]	lr: 1.000e-03, eta: 0:25:25, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.8481
+2022-03-29 09:09:18,658 - mmcls - INFO - Epoch [17][200/274]	lr: 1.000e-03, eta: 0:25:18, time: 0.542, data_time: 0.001, memory: 1280, loss: 0.7688
+2022-03-29 09:09:29,479 - mmcls - INFO - Epoch [17][220/274]	lr: 1.000e-03, eta: 0:25:12, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.8714
+2022-03-29 09:09:40,319 - mmcls - INFO - Epoch [17][240/274]	lr: 1.000e-03, eta: 0:25:06, time: 0.542, data_time: 0.001, memory: 1280, loss: 0.8257
+2022-03-29 09:09:51,150 - mmcls - INFO - Epoch [17][260/274]	lr: 1.000e-03, eta: 0:24:59, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.8944
+2022-03-29 09:09:58,362 - mmcls - INFO - Saving checkpoint at 17 epochs
+2022-03-29 09:10:31,238 - mmcls - INFO - Epoch(val) [17][60]	accuracy_top-1: 97.4074, accuracy_top-5: 99.9471, precision: 97.4236, recall: 97.4074, f1_score: 97.4004
+2022-03-29 09:10:44,480 - mmcls - INFO - Epoch [18][20/274]	lr: 1.000e-03, eta: 0:24:44, time: 0.661, data_time: 0.120, memory: 1280, loss: 0.8366
+2022-03-29 09:10:55,319 - mmcls - INFO - Epoch [18][40/274]	lr: 1.000e-03, eta: 0:24:38, time: 0.542, data_time: 0.001, memory: 1280, loss: 0.9366
+2022-03-29 09:11:06,135 - mmcls - INFO - Epoch [18][60/274]	lr: 1.000e-03, eta: 0:24:31, time: 0.541, data_time: 0.001, memory: 1280, loss: 0.7990
+2022-03-29 09:11:16,935 - mmcls - INFO - Epoch [18][80/274]	lr: 1.000e-03, eta: 0:24:24, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.8527
+2022-03-29 09:11:24,972 - mmcls - INFO - Epoch [18][100/274]	lr: 1.000e-03, eta: 0:24:16, time: 0.402, data_time: 0.001, memory: 1280, loss: 0.8619
+2022-03-29 09:11:36,062 - mmcls - INFO - Epoch [18][120/274]	lr: 1.000e-03, eta: 0:24:09, time: 0.554, data_time: 0.001, memory: 1280, loss: 0.9542
+2022-03-29 09:11:47,086 - mmcls - INFO - Epoch [18][140/274]	lr: 1.000e-03, eta: 0:24:03, time: 0.551, data_time: 0.001, memory: 1280, loss: 0.8145
+2022-03-29 09:11:58,120 - mmcls - INFO - Epoch [18][160/274]	lr: 1.000e-03, eta: 0:23:56, time: 0.552, data_time: 0.001, memory: 1280, loss: 0.8991
+2022-03-29 09:12:06,121 - mmcls - INFO - Epoch [18][180/274]	lr: 1.000e-03, eta: 0:23:47, time: 0.400, data_time: 0.002, memory: 1280, loss: 0.9521
+2022-03-29 09:12:16,915 - mmcls - INFO - Epoch [18][200/274]	lr: 1.000e-03, eta: 0:23:40, time: 0.540, data_time: 0.001, memory: 1280, loss: 0.8709
+2022-03-29 09:12:27,763 - mmcls - INFO - Epoch [18][220/274]	lr: 1.000e-03, eta: 0:23:34, time: 0.543, data_time: 0.001, memory: 1280, loss: 0.8785

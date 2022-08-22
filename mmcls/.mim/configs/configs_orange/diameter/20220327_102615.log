@@ -1,0 +1,2372 @@
+2022-03-27 10:26:15,182 - mmcls - INFO - Environment info:
+------------------------------------------------------------
+sys.platform: linux
+Python: 3.7.11 (default, Jul 27 2021, 14:32:16) [GCC 7.5.0]
+CUDA available: True
+GPU 0: Tesla P100-SXM2-16GB
+CUDA_HOME: /usr/local/cuda
+NVCC: Cuda compilation tools, release 10.1, V10.1.105
+GCC: gcc (GCC) 4.8.5 20150623 (Red Hat 4.8.5-4)
+PyTorch: 1.7.1
+PyTorch compiling details: PyTorch built with:
+  - GCC 7.3
+  - C++ Version: 201402
+  - Intel(R) oneAPI Math Kernel Library Version 2021.4-Product Build 20210904 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v1.6.0 (Git Hash 5ef631a030a6f73131c77892041042805a06064f)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - NNPACK is enabled
+  - CPU capability usage: AVX2
+  - CUDA Runtime 10.1
+  - NVCC architecture flags: -gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_61,code=sm_61;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_37,code=compute_37
+  - CuDNN 7.6.3
+  - Magma 2.5.2
+  - Build settings: BLAS=MKL, BUILD_TYPE=Release, CXX_FLAGS= -Wno-deprecated -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -fopenmp -DNDEBUG -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DUSE_VULKAN_WRAPPER -O2 -fPIC -Wno-narrowing -Wall -Wextra -Werror=return-type -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-local-typedefs -Wno-strict-overflow -Wno-strict-aliasing -Wno-error=deprecated-declarations -Wno-stringop-overflow -Wno-psabi -Wno-error=pedantic -Wno-error=redundant-decls -Wno-error=old-style-cast -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Wno-stringop-overflow, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, USE_CUDA=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=ON, USE_NNPACK=ON, USE_OPENMP=ON, 
+
+TorchVision: 0.8.2
+OpenCV: 4.5.5
+MMCV: 1.4.5
+MMCV Compiler: GCC 7.3
+MMCV CUDA Compiler: 10.1
+MMClassification: 0.21.0+
+------------------------------------------------------------
+
+2022-03-27 10:26:15,182 - mmcls - INFO - Distributed training: False
+2022-03-27 10:26:16,094 - mmcls - INFO - Config:
+model = dict(
+    type='ImageClassifier',
+    backbone=dict(
+        type='RepVGG',
+        arch='D2se',
+        out_indices=(3, ),
+        init_cfg=dict(
+            type='Pretrained',
+            checkpoint=
+            'checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth',
+            prefix='backbone')),
+    neck=dict(type='GlobalAveragePooling'),
+    head=dict(
+        type='LinearClsHead',
+        num_classes=5,
+        in_channels=2560,
+        loss=dict(
+            type='LabelSmoothLoss',
+            loss_weight=1.0,
+            label_smooth_val=0.1,
+            mode='classy_vision',
+            num_classes=5),
+        topk=(1, 5)),
+    train_cfg=dict(
+        augments=dict(type='BatchMixup', alpha=0.2, num_classes=5, prob=1.0)))
+dataset_type = 'OrangeDiameter'
+images_dir = 'data/orange/colorIMG_6view'
+ann_file_dir = 'data/orange/statics/ann_diameter5'
+label_type = 'name2diameter'
+img_norm_cfg = dict(
+    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
+train_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(type='BboxCrop'),
+    dict(type='Resize', size=224),
+    dict(type='RandomFlip', flip_prob=0.5, direction='horizontal'),
+    dict(
+        type='Normalize',
+        mean=[123.675, 116.28, 103.53],
+        std=[58.395, 57.12, 57.375],
+        to_rgb=True),
+    dict(type='ImageToTensor', keys=['img']),
+    dict(type='ToTensor', keys=['gt_label']),
+    dict(type='Collect', keys=['img', 'gt_label'])
+]
+test_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(type='BboxCrop'),
+    dict(type='Resize', size=224),
+    dict(
+        type='Normalize',
+        mean=[123.675, 116.28, 103.53],
+        std=[58.395, 57.12, 57.375],
+        to_rgb=True),
+    dict(type='ImageToTensor', keys=['img']),
+    dict(type='Collect', keys=['img'])
+]
+data = dict(
+    samples_per_gpu=32,
+    workers_per_gpu=1,
+    train=dict(
+        type='OrangeDiameter',
+        data_prefix='data/orange/colorIMG_6view',
+        ann_file=
+        'data/orange/statics/ann_diameter5/name2diameter_6view_train_bbox.txt',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='BboxCrop'),
+            dict(type='Resize', size=224),
+            dict(type='RandomFlip', flip_prob=0.5, direction='horizontal'),
+            dict(
+                type='Normalize',
+                mean=[123.675, 116.28, 103.53],
+                std=[58.395, 57.12, 57.375],
+                to_rgb=True),
+            dict(type='ImageToTensor', keys=['img']),
+            dict(type='ToTensor', keys=['gt_label']),
+            dict(type='Collect', keys=['img', 'gt_label'])
+        ]),
+    val=dict(
+        type='OrangeDiameter',
+        data_prefix='data/orange/colorIMG_6view',
+        ann_file=
+        'data/orange/statics/ann_diameter5/name2diameter_6view_val_bbox.txt',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='BboxCrop'),
+            dict(type='Resize', size=224),
+            dict(
+                type='Normalize',
+                mean=[123.675, 116.28, 103.53],
+                std=[58.395, 57.12, 57.375],
+                to_rgb=True),
+            dict(type='ImageToTensor', keys=['img']),
+            dict(type='Collect', keys=['img'])
+        ]),
+    test=dict(
+        type='OrangeDiameter',
+        data_prefix='data/orange/colorIMG_6view',
+        ann_file=
+        'data/orange/statics/ann_diameter5/name2diameter_6view_test_bbox.txt',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='BboxCrop'),
+            dict(type='Resize', size=224),
+            dict(
+                type='Normalize',
+                mean=[123.675, 116.28, 103.53],
+                std=[58.395, 57.12, 57.375],
+                to_rgb=True),
+            dict(type='ImageToTensor', keys=['img']),
+            dict(type='Collect', keys=['img'])
+        ]))
+evaluation = dict(
+    interval=1,
+    metric=['accuracy', 'precision', 'recall', 'f1_score'],
+    metric_options=dict(topk=(1, 2)))
+optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
+optimizer_config = dict(grad_clip=None)
+lr_config = dict(policy='step', step=[15, 20, 25])
+runner = dict(type='EpochBasedRunner', max_epochs=30)
+checkpoint_config = dict(interval=1)
+log_config = dict(interval=20, hooks=[dict(type='TextLoggerHook')])
+dist_params = dict(backend='nccl')
+log_level = 'INFO'
+load_from = None
+resume_from = None
+workflow = [('train', 1)]
+work_dir = './mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32_sgd-aprf-30e_diameter5'
+gpu_ids = [0]
+
+2022-03-27 10:26:16,094 - mmcls - INFO - Set random seed to 1929257406, deterministic: False
+2022-03-27 10:26:17,128 - mmcls - INFO - initialize RepVGG with init_cfg {'type': 'Pretrained', 'checkpoint': 'checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth', 'prefix': 'backbone'}
+2022-03-27 10:26:17,922 - mmcls - INFO - initialize LinearClsHead with init_cfg {'type': 'Normal', 'layer': 'Linear', 'std': 0.01}
+Name of parameter - Initialization information
+
+backbone.stem.branch_3x3.conv.weight - torch.Size([64, 3, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stem.branch_3x3.norm.weight - torch.Size([64]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stem.branch_3x3.norm.bias - torch.Size([64]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stem.branch_1x1.conv.weight - torch.Size([64, 3, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stem.branch_1x1.norm.weight - torch.Size([64]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stem.branch_1x1.norm.bias - torch.Size([64]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stem.se_layer.conv1.conv.weight - torch.Size([4, 64, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stem.se_layer.conv1.conv.bias - torch.Size([4]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stem.se_layer.conv2.conv.weight - torch.Size([64, 4, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stem.se_layer.conv2.conv.bias - torch.Size([64]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.0.branch_3x3.conv.weight - torch.Size([160, 64, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.0.branch_3x3.norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.0.branch_3x3.norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.0.branch_1x1.conv.weight - torch.Size([160, 64, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.0.branch_1x1.norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.0.branch_1x1.norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.0.se_layer.conv1.conv.weight - torch.Size([10, 160, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.0.se_layer.conv1.conv.bias - torch.Size([10]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.0.se_layer.conv2.conv.weight - torch.Size([160, 10, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.0.se_layer.conv2.conv.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.1.branch_norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.1.branch_norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.1.branch_3x3.conv.weight - torch.Size([160, 160, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.1.branch_3x3.norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.1.branch_3x3.norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.1.branch_1x1.conv.weight - torch.Size([160, 160, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.1.branch_1x1.norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.1.branch_1x1.norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.1.se_layer.conv1.conv.weight - torch.Size([10, 160, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.1.se_layer.conv1.conv.bias - torch.Size([10]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.1.se_layer.conv2.conv.weight - torch.Size([160, 10, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.1.se_layer.conv2.conv.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.2.branch_norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.2.branch_norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.2.branch_3x3.conv.weight - torch.Size([160, 160, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.2.branch_3x3.norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.2.branch_3x3.norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.2.branch_1x1.conv.weight - torch.Size([160, 160, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.2.branch_1x1.norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.2.branch_1x1.norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.2.se_layer.conv1.conv.weight - torch.Size([10, 160, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.2.se_layer.conv1.conv.bias - torch.Size([10]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.2.se_layer.conv2.conv.weight - torch.Size([160, 10, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.2.se_layer.conv2.conv.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.3.branch_norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.3.branch_norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.3.branch_3x3.conv.weight - torch.Size([160, 160, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.3.branch_3x3.norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.3.branch_3x3.norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.3.branch_1x1.conv.weight - torch.Size([160, 160, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.3.branch_1x1.norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.3.branch_1x1.norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.3.se_layer.conv1.conv.weight - torch.Size([10, 160, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.3.se_layer.conv1.conv.bias - torch.Size([10]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.3.se_layer.conv2.conv.weight - torch.Size([160, 10, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.3.se_layer.conv2.conv.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.4.branch_norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.4.branch_norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.4.branch_3x3.conv.weight - torch.Size([160, 160, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.4.branch_3x3.norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.4.branch_3x3.norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.4.branch_1x1.conv.weight - torch.Size([160, 160, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.4.branch_1x1.norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.4.branch_1x1.norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.4.se_layer.conv1.conv.weight - torch.Size([10, 160, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.4.se_layer.conv1.conv.bias - torch.Size([10]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.4.se_layer.conv2.conv.weight - torch.Size([160, 10, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.4.se_layer.conv2.conv.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.5.branch_norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.5.branch_norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.5.branch_3x3.conv.weight - torch.Size([160, 160, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.5.branch_3x3.norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.5.branch_3x3.norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.5.branch_1x1.conv.weight - torch.Size([160, 160, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.5.branch_1x1.norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.5.branch_1x1.norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.5.se_layer.conv1.conv.weight - torch.Size([10, 160, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.5.se_layer.conv1.conv.bias - torch.Size([10]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.5.se_layer.conv2.conv.weight - torch.Size([160, 10, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.5.se_layer.conv2.conv.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.6.branch_norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.6.branch_norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.6.branch_3x3.conv.weight - torch.Size([160, 160, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.6.branch_3x3.norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.6.branch_3x3.norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.6.branch_1x1.conv.weight - torch.Size([160, 160, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.6.branch_1x1.norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.6.branch_1x1.norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.6.se_layer.conv1.conv.weight - torch.Size([10, 160, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.6.se_layer.conv1.conv.bias - torch.Size([10]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.6.se_layer.conv2.conv.weight - torch.Size([160, 10, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.6.se_layer.conv2.conv.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.7.branch_norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.7.branch_norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.7.branch_3x3.conv.weight - torch.Size([160, 160, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.7.branch_3x3.norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.7.branch_3x3.norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.7.branch_1x1.conv.weight - torch.Size([160, 160, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.7.branch_1x1.norm.weight - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.7.branch_1x1.norm.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.7.se_layer.conv1.conv.weight - torch.Size([10, 160, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.7.se_layer.conv1.conv.bias - torch.Size([10]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.7.se_layer.conv2.conv.weight - torch.Size([160, 10, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_1.7.se_layer.conv2.conv.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.0.branch_3x3.conv.weight - torch.Size([320, 160, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.0.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.0.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.0.branch_1x1.conv.weight - torch.Size([320, 160, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.0.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.0.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.0.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.0.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.0.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.0.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.1.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.1.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.1.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.1.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.1.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.1.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.1.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.1.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.1.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.1.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.1.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.1.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.2.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.2.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.2.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.2.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.2.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.2.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.2.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.2.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.2.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.2.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.2.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.2.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.3.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.3.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.3.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.3.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.3.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.3.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.3.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.3.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.3.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.3.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.3.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.3.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.4.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.4.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.4.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.4.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.4.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.4.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.4.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.4.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.4.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.4.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.4.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.4.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.5.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.5.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.5.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.5.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.5.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.5.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.5.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.5.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.5.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.5.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.5.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.5.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.6.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.6.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.6.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.6.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.6.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.6.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.6.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.6.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.6.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.6.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.6.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.6.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.7.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.7.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.7.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.7.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.7.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.7.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.7.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.7.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.7.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.7.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.7.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.7.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.8.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.8.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.8.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.8.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.8.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.8.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.8.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.8.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.8.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.8.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.8.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.8.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.9.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.9.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.9.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.9.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.9.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.9.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.9.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.9.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.9.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.9.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.9.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.9.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.10.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.10.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.10.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.10.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.10.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.10.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.10.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.10.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.10.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.10.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.10.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.10.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.11.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.11.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.11.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.11.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.11.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.11.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.11.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.11.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.11.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.11.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.11.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.11.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.12.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.12.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.12.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.12.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.12.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.12.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.12.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.12.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.12.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.12.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.12.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.12.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.13.branch_norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.13.branch_norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.13.branch_3x3.conv.weight - torch.Size([320, 320, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.13.branch_3x3.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.13.branch_3x3.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.13.branch_1x1.conv.weight - torch.Size([320, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.13.branch_1x1.norm.weight - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.13.branch_1x1.norm.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.13.se_layer.conv1.conv.weight - torch.Size([20, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.13.se_layer.conv1.conv.bias - torch.Size([20]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.13.se_layer.conv2.conv.weight - torch.Size([320, 20, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_2.13.se_layer.conv2.conv.bias - torch.Size([320]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.0.branch_3x3.conv.weight - torch.Size([640, 320, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.0.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.0.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.0.branch_1x1.conv.weight - torch.Size([640, 320, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.0.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.0.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.0.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.0.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.0.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.0.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.1.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.1.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.1.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.1.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.1.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.1.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.1.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.1.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.1.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.1.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.1.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.1.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.2.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.2.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.2.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.2.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.2.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.2.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.2.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.2.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.2.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.2.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.2.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.2.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.3.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.3.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.3.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.3.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.3.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.3.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.3.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.3.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.3.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.3.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.3.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.3.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.4.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.4.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.4.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.4.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.4.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.4.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.4.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.4.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.4.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.4.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.4.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.4.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.5.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.5.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.5.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.5.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.5.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.5.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.5.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.5.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.5.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.5.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.5.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.5.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.6.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.6.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.6.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.6.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.6.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.6.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.6.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.6.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.6.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.6.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.6.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.6.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.7.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.7.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.7.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.7.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.7.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.7.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.7.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.7.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.7.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.7.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.7.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.7.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.8.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.8.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.8.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.8.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.8.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.8.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.8.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.8.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.8.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.8.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.8.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.8.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.9.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.9.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.9.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.9.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.9.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.9.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.9.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.9.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.9.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.9.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.9.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.9.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.10.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.10.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.10.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.10.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.10.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.10.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.10.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.10.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.10.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.10.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.10.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.10.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.11.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.11.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.11.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.11.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.11.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.11.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.11.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.11.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.11.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.11.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.11.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.11.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.12.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.12.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.12.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.12.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.12.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.12.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.12.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.12.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.12.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.12.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.12.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.12.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.13.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.13.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.13.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.13.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.13.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.13.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.13.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.13.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.13.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.13.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.13.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.13.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.14.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.14.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.14.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.14.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.14.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.14.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.14.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.14.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.14.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.14.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.14.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.14.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.15.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.15.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.15.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.15.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.15.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.15.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.15.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.15.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.15.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.15.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.15.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.15.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.16.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.16.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.16.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.16.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.16.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.16.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.16.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.16.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.16.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.16.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.16.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.16.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.17.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.17.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.17.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.17.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.17.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.17.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.17.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.17.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.17.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.17.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.17.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.17.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.18.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.18.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.18.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.18.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.18.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.18.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.18.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.18.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.18.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.18.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.18.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.18.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.19.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.19.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.19.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.19.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.19.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.19.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.19.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.19.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.19.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.19.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.19.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.19.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.20.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.20.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.20.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.20.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.20.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.20.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.20.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.20.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.20.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.20.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.20.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.20.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.21.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.21.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.21.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.21.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.21.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.21.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.21.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.21.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.21.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.21.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.21.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.21.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.22.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.22.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.22.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.22.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.22.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.22.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.22.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.22.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.22.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.22.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.22.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.22.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.23.branch_norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.23.branch_norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.23.branch_3x3.conv.weight - torch.Size([640, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.23.branch_3x3.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.23.branch_3x3.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.23.branch_1x1.conv.weight - torch.Size([640, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.23.branch_1x1.norm.weight - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.23.branch_1x1.norm.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.23.se_layer.conv1.conv.weight - torch.Size([40, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.23.se_layer.conv1.conv.bias - torch.Size([40]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.23.se_layer.conv2.conv.weight - torch.Size([640, 40, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_3.23.se_layer.conv2.conv.bias - torch.Size([640]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_4.0.branch_3x3.conv.weight - torch.Size([2560, 640, 3, 3]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_4.0.branch_3x3.norm.weight - torch.Size([2560]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_4.0.branch_3x3.norm.bias - torch.Size([2560]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_4.0.branch_1x1.conv.weight - torch.Size([2560, 640, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_4.0.branch_1x1.norm.weight - torch.Size([2560]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_4.0.branch_1x1.norm.bias - torch.Size([2560]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_4.0.se_layer.conv1.conv.weight - torch.Size([160, 2560, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_4.0.se_layer.conv1.conv.bias - torch.Size([160]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_4.0.se_layer.conv2.conv.weight - torch.Size([2560, 160, 1, 1]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+backbone.stage_4.0.se_layer.conv2.conv.bias - torch.Size([2560]): 
+PretrainedInit: load from checkpoints/mmcls/repvgg-D2se_3rdparty_4xb64-autoaug-lbs-mixup-coslr-200e_in1k_20210909-cf3139b7.pth 
+
+head.fc.weight - torch.Size([5, 2560]): 
+NormalInit: mean=0, std=0.01, bias=0 
+
+head.fc.bias - torch.Size([5]): 
+NormalInit: mean=0, std=0.01, bias=0 
+2022-03-27 10:26:26,288 - mmcls - INFO - Start running, host: chaixiujuan@gpu07, work_dir: /lustre/chaixiujuan/gzb/mmlab/mmclassification/mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32_sgd-aprf-30e_diameter5
+2022-03-27 10:26:26,288 - mmcls - INFO - Hooks will be executed in the following order:
+before_run:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(NORMAL      ) CheckpointHook                     
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_epoch:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(LOW         ) IterTimerHook                      
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_train_iter:
+(VERY_HIGH   ) StepLrUpdaterHook                  
+(LOW         ) IterTimerHook                      
+(LOW         ) EvalHook                           
+ -------------------- 
+after_train_iter:
+(ABOVE_NORMAL) OptimizerHook                      
+(NORMAL      ) CheckpointHook                     
+(LOW         ) IterTimerHook                      
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_train_epoch:
+(NORMAL      ) CheckpointHook                     
+(LOW         ) EvalHook                           
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_epoch:
+(LOW         ) IterTimerHook                      
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+before_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_iter:
+(LOW         ) IterTimerHook                      
+ -------------------- 
+after_val_epoch:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+after_run:
+(VERY_LOW    ) TextLoggerHook                     
+ -------------------- 
+2022-03-27 10:26:26,288 - mmcls - INFO - workflow: [('train', 1)], max: 30 epochs
+2022-03-27 10:26:26,288 - mmcls - INFO - Checkpoints will be saved to /lustre/chaixiujuan/gzb/mmlab/mmclassification/mmgzb/work_dirs/repvgg-D2se_in1k-pre_1xb32_sgd-aprf-30e_diameter5 by HardDiskBackend.
+2022-03-27 10:27:00,267 - mmcls - INFO - Epoch [1][20/263]	lr: 1.000e-02, eta: 3:42:41, time: 1.698, data_time: 0.124, memory: 8636, loss: 1.2425
+2022-03-27 10:27:31,221 - mmcls - INFO - Epoch [1][40/263]	lr: 1.000e-02, eta: 3:32:18, time: 1.548, data_time: 0.001, memory: 8636, loss: 1.0641
+2022-03-27 10:28:02,194 - mmcls - INFO - Epoch [1][60/263]	lr: 1.000e-02, eta: 3:28:34, time: 1.549, data_time: 0.001, memory: 8636, loss: 1.0166
+2022-03-27 10:28:33,164 - mmcls - INFO - Epoch [1][80/263]	lr: 1.000e-02, eta: 3:26:23, time: 1.548, data_time: 0.000, memory: 8636, loss: 0.9034
+2022-03-27 10:29:03,976 - mmcls - INFO - Epoch [1][100/263]	lr: 1.000e-02, eta: 3:24:41, time: 1.541, data_time: 0.001, memory: 8636, loss: 0.8153
+2022-03-27 10:29:34,774 - mmcls - INFO - Epoch [1][120/263]	lr: 1.000e-02, eta: 3:23:22, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.9037
+2022-03-27 10:30:05,669 - mmcls - INFO - Epoch [1][140/263]	lr: 1.000e-02, eta: 3:22:22, time: 1.545, data_time: 0.001, memory: 8636, loss: 0.9344
+2022-03-27 10:30:36,491 - mmcls - INFO - Epoch [1][160/263]	lr: 1.000e-02, eta: 3:21:26, time: 1.541, data_time: 0.001, memory: 8636, loss: 0.7640
+2022-03-27 10:31:07,521 - mmcls - INFO - Epoch [1][180/263]	lr: 1.000e-02, eta: 3:20:45, time: 1.551, data_time: 0.001, memory: 8636, loss: 0.7549
+2022-03-27 10:31:38,353 - mmcls - INFO - Epoch [1][200/263]	lr: 1.000e-02, eta: 3:19:58, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.7614
+2022-03-27 10:32:09,225 - mmcls - INFO - Epoch [1][220/263]	lr: 1.000e-02, eta: 3:19:15, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.6720
+2022-03-27 10:32:40,039 - mmcls - INFO - Epoch [1][240/263]	lr: 1.000e-02, eta: 3:18:32, time: 1.541, data_time: 0.001, memory: 8636, loss: 0.8072
+2022-03-27 10:33:10,838 - mmcls - INFO - Epoch [1][260/263]	lr: 1.000e-02, eta: 3:17:51, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.8207
+2022-03-27 10:33:14,266 - mmcls - INFO - Saving checkpoint at 1 epochs
+2022-03-27 10:33:46,280 - mmcls - INFO - Epoch(val) [1][57]	accuracy_top-1: 87.7437, accuracy_top-2: 96.9359, precision: 88.7761, recall: 87.7437, f1_score: 87.7620
+2022-03-27 10:34:19,595 - mmcls - INFO - Epoch [2][20/263]	lr: 1.000e-02, eta: 3:16:08, time: 1.665, data_time: 0.122, memory: 8636, loss: 0.8486
+2022-03-27 10:34:50,517 - mmcls - INFO - Epoch [2][40/263]	lr: 1.000e-02, eta: 3:15:37, time: 1.546, data_time: 0.001, memory: 8636, loss: 0.6525
+2022-03-27 10:35:21,478 - mmcls - INFO - Epoch [2][60/263]	lr: 1.000e-02, eta: 3:15:06, time: 1.548, data_time: 0.001, memory: 8636, loss: 0.7062
+2022-03-27 10:35:52,349 - mmcls - INFO - Epoch [2][80/263]	lr: 1.000e-02, eta: 3:14:34, time: 1.544, data_time: 0.001, memory: 8636, loss: 0.6720
+2022-03-27 10:36:23,238 - mmcls - INFO - Epoch [2][100/263]	lr: 1.000e-02, eta: 3:14:02, time: 1.544, data_time: 0.001, memory: 8636, loss: 0.7618
+2022-03-27 10:36:54,045 - mmcls - INFO - Epoch [2][120/263]	lr: 1.000e-02, eta: 3:13:28, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.7332
+2022-03-27 10:37:24,933 - mmcls - INFO - Epoch [2][140/263]	lr: 1.000e-02, eta: 3:12:57, time: 1.544, data_time: 0.001, memory: 8636, loss: 0.6631
+2022-03-27 10:37:55,878 - mmcls - INFO - Epoch [2][160/263]	lr: 1.000e-02, eta: 3:12:26, time: 1.547, data_time: 0.001, memory: 8636, loss: 0.8089
+2022-03-27 10:38:26,755 - mmcls - INFO - Epoch [2][180/263]	lr: 1.000e-02, eta: 3:11:54, time: 1.544, data_time: 0.001, memory: 8636, loss: 0.6462
+2022-03-27 10:38:57,693 - mmcls - INFO - Epoch [2][200/263]	lr: 1.000e-02, eta: 3:11:24, time: 1.547, data_time: 0.001, memory: 8636, loss: 0.6878
+2022-03-27 10:39:28,745 - mmcls - INFO - Epoch [2][220/263]	lr: 1.000e-02, eta: 3:10:55, time: 1.553, data_time: 0.001, memory: 8636, loss: 0.6509
+2022-03-27 10:39:59,683 - mmcls - INFO - Epoch [2][240/263]	lr: 1.000e-02, eta: 3:10:24, time: 1.546, data_time: 0.001, memory: 8636, loss: 0.6079
+2022-03-27 10:40:30,544 - mmcls - INFO - Epoch [2][260/263]	lr: 1.000e-02, eta: 3:09:52, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.6022
+2022-03-27 10:40:33,968 - mmcls - INFO - Saving checkpoint at 2 epochs
+2022-03-27 10:41:05,881 - mmcls - INFO - Epoch(val) [2][57]	accuracy_top-1: 91.0306, accuracy_top-2: 98.7744, precision: 92.0971, recall: 91.0306, f1_score: 90.7968
+2022-03-27 10:41:39,267 - mmcls - INFO - Epoch [3][20/263]	lr: 1.000e-02, eta: 3:08:46, time: 1.668, data_time: 0.121, memory: 8636, loss: 0.7109
+2022-03-27 10:42:10,141 - mmcls - INFO - Epoch [3][40/263]	lr: 1.000e-02, eta: 3:08:16, time: 1.544, data_time: 0.001, memory: 8636, loss: 0.5742
+2022-03-27 10:42:40,937 - mmcls - INFO - Epoch [3][60/263]	lr: 1.000e-02, eta: 3:07:44, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.6569
+2022-03-27 10:43:11,713 - mmcls - INFO - Epoch [3][80/263]	lr: 1.000e-02, eta: 3:07:13, time: 1.539, data_time: 0.001, memory: 8636, loss: 0.6531
+2022-03-27 10:43:42,645 - mmcls - INFO - Epoch [3][100/263]	lr: 1.000e-02, eta: 3:06:43, time: 1.547, data_time: 0.001, memory: 8636, loss: 0.6706
+2022-03-27 10:44:13,568 - mmcls - INFO - Epoch [3][120/263]	lr: 1.000e-02, eta: 3:06:13, time: 1.546, data_time: 0.001, memory: 8636, loss: 0.5639
+2022-03-27 10:44:44,352 - mmcls - INFO - Epoch [3][140/263]	lr: 1.000e-02, eta: 3:05:42, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.6889
+2022-03-27 10:45:15,195 - mmcls - INFO - Epoch [3][160/263]	lr: 1.000e-02, eta: 3:05:10, time: 1.541, data_time: 0.000, memory: 8636, loss: 0.6612
+2022-03-27 10:45:46,202 - mmcls - INFO - Epoch [3][180/263]	lr: 1.000e-02, eta: 3:04:41, time: 1.550, data_time: 0.001, memory: 8636, loss: 0.6088
+2022-03-27 10:46:17,241 - mmcls - INFO - Epoch [3][200/263]	lr: 1.000e-02, eta: 3:04:12, time: 1.552, data_time: 0.001, memory: 8636, loss: 0.6633
+2022-03-27 10:46:48,074 - mmcls - INFO - Epoch [3][220/263]	lr: 1.000e-02, eta: 3:03:41, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.7432
+2022-03-27 10:47:19,001 - mmcls - INFO - Epoch [3][240/263]	lr: 1.000e-02, eta: 3:03:11, time: 1.546, data_time: 0.001, memory: 8636, loss: 0.7316
+2022-03-27 10:47:49,783 - mmcls - INFO - Epoch [3][260/263]	lr: 1.000e-02, eta: 3:02:39, time: 1.539, data_time: 0.001, memory: 8636, loss: 0.6829
+2022-03-27 10:47:53,226 - mmcls - INFO - Saving checkpoint at 3 epochs
+2022-03-27 10:48:25,171 - mmcls - INFO - Epoch(val) [3][57]	accuracy_top-1: 95.7103, accuracy_top-2: 99.4429, precision: 95.9473, recall: 95.7103, f1_score: 95.6879
+2022-03-27 10:48:58,642 - mmcls - INFO - Epoch [4][20/263]	lr: 1.000e-02, eta: 3:01:46, time: 1.672, data_time: 0.124, memory: 8636, loss: 0.6078
+2022-03-27 10:49:29,477 - mmcls - INFO - Epoch [4][40/263]	lr: 1.000e-02, eta: 3:01:16, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.6051
+2022-03-27 10:50:00,357 - mmcls - INFO - Epoch [4][60/263]	lr: 1.000e-02, eta: 3:00:45, time: 1.544, data_time: 0.001, memory: 8636, loss: 0.6963
+2022-03-27 10:50:31,223 - mmcls - INFO - Epoch [4][80/263]	lr: 1.000e-02, eta: 3:00:15, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.6967
+2022-03-27 10:51:02,168 - mmcls - INFO - Epoch [4][100/263]	lr: 1.000e-02, eta: 2:59:45, time: 1.547, data_time: 0.001, memory: 8636, loss: 0.6496
+2022-03-27 10:51:33,047 - mmcls - INFO - Epoch [4][120/263]	lr: 1.000e-02, eta: 2:59:15, time: 1.544, data_time: 0.001, memory: 8636, loss: 0.6224
+2022-03-27 10:52:04,006 - mmcls - INFO - Epoch [4][140/263]	lr: 1.000e-02, eta: 2:58:45, time: 1.548, data_time: 0.001, memory: 8636, loss: 0.6288
+2022-03-27 10:52:34,928 - mmcls - INFO - Epoch [4][160/263]	lr: 1.000e-02, eta: 2:58:15, time: 1.546, data_time: 0.001, memory: 8636, loss: 0.7305
+2022-03-27 10:53:05,913 - mmcls - INFO - Epoch [4][180/263]	lr: 1.000e-02, eta: 2:57:46, time: 1.549, data_time: 0.001, memory: 8636, loss: 0.5307
+2022-03-27 10:53:36,686 - mmcls - INFO - Epoch [4][200/263]	lr: 1.000e-02, eta: 2:57:14, time: 1.539, data_time: 0.001, memory: 8636, loss: 0.5507
+2022-03-27 10:54:07,612 - mmcls - INFO - Epoch [4][220/263]	lr: 1.000e-02, eta: 2:56:44, time: 1.546, data_time: 0.001, memory: 8636, loss: 0.6650
+2022-03-27 10:54:38,512 - mmcls - INFO - Epoch [4][240/263]	lr: 1.000e-02, eta: 2:56:14, time: 1.545, data_time: 0.001, memory: 8636, loss: 0.7256
+2022-03-27 10:55:09,376 - mmcls - INFO - Epoch [4][260/263]	lr: 1.000e-02, eta: 2:55:43, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.6127
+2022-03-27 10:55:12,785 - mmcls - INFO - Saving checkpoint at 4 epochs
+2022-03-27 10:55:44,675 - mmcls - INFO - Epoch(val) [4][57]	accuracy_top-1: 96.0446, accuracy_top-2: 99.5543, precision: 96.3898, recall: 96.0446, f1_score: 96.0349
+2022-03-27 10:56:17,999 - mmcls - INFO - Epoch [5][20/263]	lr: 1.000e-02, eta: 2:54:54, time: 1.665, data_time: 0.123, memory: 8636, loss: 0.6080
+2022-03-27 10:56:48,870 - mmcls - INFO - Epoch [5][40/263]	lr: 1.000e-02, eta: 2:54:24, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.6568
+2022-03-27 10:57:19,653 - mmcls - INFO - Epoch [5][60/263]	lr: 1.000e-02, eta: 2:53:53, time: 1.539, data_time: 0.001, memory: 8636, loss: 0.5624
+2022-03-27 10:57:50,433 - mmcls - INFO - Epoch [5][80/263]	lr: 1.000e-02, eta: 2:53:22, time: 1.539, data_time: 0.001, memory: 8636, loss: 0.6661
+2022-03-27 10:58:21,202 - mmcls - INFO - Epoch [5][100/263]	lr: 1.000e-02, eta: 2:52:52, time: 1.538, data_time: 0.001, memory: 8636, loss: 0.6046
+2022-03-27 10:58:52,043 - mmcls - INFO - Epoch [5][120/263]	lr: 1.000e-02, eta: 2:52:21, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.6494
+2022-03-27 10:59:22,903 - mmcls - INFO - Epoch [5][140/263]	lr: 1.000e-02, eta: 2:51:51, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.6875
+2022-03-27 10:59:53,842 - mmcls - INFO - Epoch [5][160/263]	lr: 1.000e-02, eta: 2:51:21, time: 1.547, data_time: 0.001, memory: 8636, loss: 0.6190
+2022-03-27 11:00:24,734 - mmcls - INFO - Epoch [5][180/263]	lr: 1.000e-02, eta: 2:50:50, time: 1.545, data_time: 0.001, memory: 8636, loss: 0.6717
+2022-03-27 11:00:55,730 - mmcls - INFO - Epoch [5][200/263]	lr: 1.000e-02, eta: 2:50:21, time: 1.550, data_time: 0.001, memory: 8636, loss: 0.5559
+2022-03-27 11:01:26,464 - mmcls - INFO - Epoch [5][220/263]	lr: 1.000e-02, eta: 2:49:50, time: 1.537, data_time: 0.001, memory: 8636, loss: 0.6107
+2022-03-27 11:01:57,244 - mmcls - INFO - Epoch [5][240/263]	lr: 1.000e-02, eta: 2:49:19, time: 1.539, data_time: 0.001, memory: 8636, loss: 0.5937
+2022-03-27 11:02:27,999 - mmcls - INFO - Epoch [5][260/263]	lr: 1.000e-02, eta: 2:48:48, time: 1.538, data_time: 0.001, memory: 8636, loss: 0.5930
+2022-03-27 11:02:31,398 - mmcls - INFO - Saving checkpoint at 5 epochs
+2022-03-27 11:03:03,116 - mmcls - INFO - Epoch(val) [5][57]	accuracy_top-1: 96.0446, accuracy_top-2: 99.3315, precision: 96.3200, recall: 96.0446, f1_score: 96.0406
+2022-03-27 11:03:36,337 - mmcls - INFO - Epoch [6][20/263]	lr: 1.000e-02, eta: 2:48:01, time: 1.660, data_time: 0.121, memory: 8636, loss: 0.6135
+2022-03-27 11:04:07,226 - mmcls - INFO - Epoch [6][40/263]	lr: 1.000e-02, eta: 2:47:31, time: 1.544, data_time: 0.001, memory: 8636, loss: 0.5893
+2022-03-27 11:04:38,019 - mmcls - INFO - Epoch [6][60/263]	lr: 1.000e-02, eta: 2:47:01, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.5917
+2022-03-27 11:05:08,882 - mmcls - INFO - Epoch [6][80/263]	lr: 1.000e-02, eta: 2:46:30, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.5590
+2022-03-27 11:05:39,810 - mmcls - INFO - Epoch [6][100/263]	lr: 1.000e-02, eta: 2:46:00, time: 1.547, data_time: 0.001, memory: 8636, loss: 0.6236
+2022-03-27 11:06:10,692 - mmcls - INFO - Epoch [6][120/263]	lr: 1.000e-02, eta: 2:45:30, time: 1.544, data_time: 0.001, memory: 8636, loss: 0.6250
+2022-03-27 11:06:41,584 - mmcls - INFO - Epoch [6][140/263]	lr: 1.000e-02, eta: 2:45:00, time: 1.545, data_time: 0.001, memory: 8636, loss: 0.5486
+2022-03-27 11:07:12,392 - mmcls - INFO - Epoch [6][160/263]	lr: 1.000e-02, eta: 2:44:29, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.6042
+2022-03-27 11:07:43,115 - mmcls - INFO - Epoch [6][180/263]	lr: 1.000e-02, eta: 2:43:58, time: 1.536, data_time: 0.001, memory: 8636, loss: 0.5893
+2022-03-27 11:08:13,967 - mmcls - INFO - Epoch [6][200/263]	lr: 1.000e-02, eta: 2:43:28, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.6435
+2022-03-27 11:08:44,769 - mmcls - INFO - Epoch [6][220/263]	lr: 1.000e-02, eta: 2:42:57, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.6853
+2022-03-27 11:09:15,602 - mmcls - INFO - Epoch [6][240/263]	lr: 1.000e-02, eta: 2:42:27, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.5914
+2022-03-27 11:09:46,439 - mmcls - INFO - Epoch [6][260/263]	lr: 1.000e-02, eta: 2:41:56, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.6367
+2022-03-27 11:09:49,899 - mmcls - INFO - Saving checkpoint at 6 epochs
+2022-03-27 11:10:21,803 - mmcls - INFO - Epoch(val) [6][57]	accuracy_top-1: 97.9944, accuracy_top-2: 99.9443, precision: 98.0297, recall: 97.9944, f1_score: 97.9929
+2022-03-27 11:10:55,176 - mmcls - INFO - Epoch [7][20/263]	lr: 1.000e-02, eta: 2:41:13, time: 1.668, data_time: 0.120, memory: 8636, loss: 0.6462
+2022-03-27 11:11:26,047 - mmcls - INFO - Epoch [7][40/263]	lr: 1.000e-02, eta: 2:40:43, time: 1.544, data_time: 0.001, memory: 8636, loss: 0.5293
+2022-03-27 11:11:56,985 - mmcls - INFO - Epoch [7][60/263]	lr: 1.000e-02, eta: 2:40:13, time: 1.547, data_time: 0.001, memory: 8636, loss: 0.6234
+2022-03-27 11:12:27,817 - mmcls - INFO - Epoch [7][80/263]	lr: 1.000e-02, eta: 2:39:42, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.6931
+2022-03-27 11:12:58,725 - mmcls - INFO - Epoch [7][100/263]	lr: 1.000e-02, eta: 2:39:12, time: 1.545, data_time: 0.001, memory: 8636, loss: 0.5998
+2022-03-27 11:13:29,560 - mmcls - INFO - Epoch [7][120/263]	lr: 1.000e-02, eta: 2:38:41, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.4915
+2022-03-27 11:14:00,517 - mmcls - INFO - Epoch [7][140/263]	lr: 1.000e-02, eta: 2:38:11, time: 1.547, data_time: 0.001, memory: 8636, loss: 0.5810
+2022-03-27 11:14:31,306 - mmcls - INFO - Epoch [7][160/263]	lr: 1.000e-02, eta: 2:37:41, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.5825
+2022-03-27 11:15:02,213 - mmcls - INFO - Epoch [7][180/263]	lr: 1.000e-02, eta: 2:37:10, time: 1.545, data_time: 0.001, memory: 8636, loss: 0.6317
+2022-03-27 11:15:33,085 - mmcls - INFO - Epoch [7][200/263]	lr: 1.000e-02, eta: 2:36:40, time: 1.544, data_time: 0.001, memory: 8636, loss: 0.6223
+2022-03-27 11:16:03,907 - mmcls - INFO - Epoch [7][220/263]	lr: 1.000e-02, eta: 2:36:10, time: 1.541, data_time: 0.001, memory: 8636, loss: 0.6459
+2022-03-27 11:16:34,662 - mmcls - INFO - Epoch [7][240/263]	lr: 1.000e-02, eta: 2:35:39, time: 1.538, data_time: 0.001, memory: 8636, loss: 0.5137
+2022-03-27 11:17:05,629 - mmcls - INFO - Epoch [7][260/263]	lr: 1.000e-02, eta: 2:35:09, time: 1.548, data_time: 0.001, memory: 8636, loss: 0.6437
+2022-03-27 11:17:09,055 - mmcls - INFO - Saving checkpoint at 7 epochs
+2022-03-27 11:17:41,349 - mmcls - INFO - Epoch(val) [7][57]	accuracy_top-1: 97.7716, accuracy_top-2: 99.7772, precision: 97.7961, recall: 97.7716, f1_score: 97.7579
+2022-03-27 11:18:14,643 - mmcls - INFO - Epoch [8][20/263]	lr: 1.000e-02, eta: 2:34:26, time: 1.664, data_time: 0.123, memory: 8636, loss: 0.6712
+2022-03-27 11:18:45,533 - mmcls - INFO - Epoch [8][40/263]	lr: 1.000e-02, eta: 2:33:56, time: 1.544, data_time: 0.001, memory: 8636, loss: 0.5878
+2022-03-27 11:19:16,361 - mmcls - INFO - Epoch [8][60/263]	lr: 1.000e-02, eta: 2:33:26, time: 1.541, data_time: 0.001, memory: 8636, loss: 0.5564
+2022-03-27 11:19:47,173 - mmcls - INFO - Epoch [8][80/263]	lr: 1.000e-02, eta: 2:32:55, time: 1.541, data_time: 0.001, memory: 8636, loss: 0.6418
+2022-03-27 11:20:18,076 - mmcls - INFO - Epoch [8][100/263]	lr: 1.000e-02, eta: 2:32:25, time: 1.545, data_time: 0.001, memory: 8636, loss: 0.6593
+2022-03-27 11:20:48,963 - mmcls - INFO - Epoch [8][120/263]	lr: 1.000e-02, eta: 2:31:55, time: 1.545, data_time: 0.001, memory: 8636, loss: 0.5345
+2022-03-27 11:21:19,772 - mmcls - INFO - Epoch [8][140/263]	lr: 1.000e-02, eta: 2:31:24, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.5725
+2022-03-27 11:21:50,579 - mmcls - INFO - Epoch [8][160/263]	lr: 1.000e-02, eta: 2:30:53, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.5379
+2022-03-27 11:22:21,527 - mmcls - INFO - Epoch [8][180/263]	lr: 1.000e-02, eta: 2:30:23, time: 1.548, data_time: 0.001, memory: 8636, loss: 0.6724
+2022-03-27 11:22:52,418 - mmcls - INFO - Epoch [8][200/263]	lr: 1.000e-02, eta: 2:29:53, time: 1.544, data_time: 0.001, memory: 8636, loss: 0.5632
+2022-03-27 11:23:23,271 - mmcls - INFO - Epoch [8][220/263]	lr: 1.000e-02, eta: 2:29:23, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.5923
+2022-03-27 11:23:54,282 - mmcls - INFO - Epoch [8][240/263]	lr: 1.000e-02, eta: 2:28:52, time: 1.551, data_time: 0.001, memory: 8636, loss: 0.5947
+2022-03-27 11:24:25,118 - mmcls - INFO - Epoch [8][260/263]	lr: 1.000e-02, eta: 2:28:22, time: 1.541, data_time: 0.001, memory: 8636, loss: 0.5949
+2022-03-27 11:24:28,532 - mmcls - INFO - Saving checkpoint at 8 epochs
+2022-03-27 11:25:00,440 - mmcls - INFO - Epoch(val) [8][57]	accuracy_top-1: 98.8301, accuracy_top-2: 99.7772, precision: 98.8405, recall: 98.8301, f1_score: 98.8283
+2022-03-27 11:25:31,984 - mmcls - INFO - Epoch [9][20/263]	lr: 1.000e-02, eta: 2:27:36, time: 1.576, data_time: 0.120, memory: 8636, loss: 0.5594
+2022-03-27 11:26:02,844 - mmcls - INFO - Epoch [9][40/263]	lr: 1.000e-02, eta: 2:27:06, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.4514
+2022-03-27 11:26:33,709 - mmcls - INFO - Epoch [9][60/263]	lr: 1.000e-02, eta: 2:26:35, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.5626
+2022-03-27 11:27:04,628 - mmcls - INFO - Epoch [9][80/263]	lr: 1.000e-02, eta: 2:26:05, time: 1.546, data_time: 0.001, memory: 8636, loss: 0.4932
+2022-03-27 11:27:35,451 - mmcls - INFO - Epoch [9][100/263]	lr: 1.000e-02, eta: 2:25:35, time: 1.541, data_time: 0.001, memory: 8636, loss: 0.6210
+2022-03-27 11:28:06,359 - mmcls - INFO - Epoch [9][120/263]	lr: 1.000e-02, eta: 2:25:05, time: 1.546, data_time: 0.001, memory: 8636, loss: 0.5675
+2022-03-27 11:28:37,221 - mmcls - INFO - Epoch [9][140/263]	lr: 1.000e-02, eta: 2:24:34, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.6100
+2022-03-27 11:29:08,050 - mmcls - INFO - Epoch [9][160/263]	lr: 1.000e-02, eta: 2:24:04, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.6305
+2022-03-27 11:29:38,849 - mmcls - INFO - Epoch [9][180/263]	lr: 1.000e-02, eta: 2:23:33, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.5723
+2022-03-27 11:30:09,698 - mmcls - INFO - Epoch [9][200/263]	lr: 1.000e-02, eta: 2:23:03, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.5761
+2022-03-27 11:30:40,729 - mmcls - INFO - Epoch [9][220/263]	lr: 1.000e-02, eta: 2:22:33, time: 1.552, data_time: 0.001, memory: 8636, loss: 0.4990
+2022-03-27 11:31:11,686 - mmcls - INFO - Epoch [9][240/263]	lr: 1.000e-02, eta: 2:22:02, time: 1.547, data_time: 0.001, memory: 8636, loss: 0.5243
+2022-03-27 11:31:42,593 - mmcls - INFO - Epoch [9][260/263]	lr: 1.000e-02, eta: 2:21:32, time: 1.545, data_time: 0.001, memory: 8636, loss: 0.6366
+2022-03-27 11:31:46,027 - mmcls - INFO - Saving checkpoint at 9 epochs
+2022-03-27 11:32:17,948 - mmcls - INFO - Epoch(val) [9][57]	accuracy_top-1: 99.1644, accuracy_top-2: 99.8329, precision: 99.1651, recall: 99.1643, f1_score: 99.1639
+2022-03-27 11:32:51,235 - mmcls - INFO - Epoch [10][20/263]	lr: 1.000e-02, eta: 2:20:52, time: 1.663, data_time: 0.122, memory: 8636, loss: 0.5685
+2022-03-27 11:33:22,125 - mmcls - INFO - Epoch [10][40/263]	lr: 1.000e-02, eta: 2:20:22, time: 1.545, data_time: 0.001, memory: 8636, loss: 0.5782
+2022-03-27 11:33:52,843 - mmcls - INFO - Epoch [10][60/263]	lr: 1.000e-02, eta: 2:19:51, time: 1.536, data_time: 0.001, memory: 8636, loss: 0.5751
+2022-03-27 11:34:23,709 - mmcls - INFO - Epoch [10][80/263]	lr: 1.000e-02, eta: 2:19:20, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.5045
+2022-03-27 11:34:54,637 - mmcls - INFO - Epoch [10][100/263]	lr: 1.000e-02, eta: 2:18:50, time: 1.547, data_time: 0.001, memory: 8636, loss: 0.6377
+2022-03-27 11:35:25,597 - mmcls - INFO - Epoch [10][120/263]	lr: 1.000e-02, eta: 2:18:20, time: 1.547, data_time: 0.001, memory: 8636, loss: 0.4680
+2022-03-27 11:35:56,416 - mmcls - INFO - Epoch [10][140/263]	lr: 1.000e-02, eta: 2:17:49, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.5546
+2022-03-27 11:36:27,522 - mmcls - INFO - Epoch [10][160/263]	lr: 1.000e-02, eta: 2:17:20, time: 1.555, data_time: 0.000, memory: 8636, loss: 0.5541
+2022-03-27 11:36:58,414 - mmcls - INFO - Epoch [10][180/263]	lr: 1.000e-02, eta: 2:16:49, time: 1.544, data_time: 0.000, memory: 8636, loss: 0.5783
+2022-03-27 11:37:29,305 - mmcls - INFO - Epoch [10][200/263]	lr: 1.000e-02, eta: 2:16:19, time: 1.544, data_time: 0.001, memory: 8636, loss: 0.5887
+2022-03-27 11:38:00,068 - mmcls - INFO - Epoch [10][220/263]	lr: 1.000e-02, eta: 2:15:48, time: 1.538, data_time: 0.001, memory: 8636, loss: 0.4921
+2022-03-27 11:38:30,330 - mmcls - INFO - Epoch [10][240/263]	lr: 1.000e-02, eta: 2:15:16, time: 1.513, data_time: 0.001, memory: 8636, loss: 0.5736
+2022-03-27 11:39:01,096 - mmcls - INFO - Epoch [10][260/263]	lr: 1.000e-02, eta: 2:14:46, time: 1.538, data_time: 0.001, memory: 8636, loss: 0.6190
+2022-03-27 11:39:04,505 - mmcls - INFO - Saving checkpoint at 10 epochs
+2022-03-27 11:39:36,224 - mmcls - INFO - Epoch(val) [10][57]	accuracy_top-1: 98.3844, accuracy_top-2: 99.7772, precision: 98.4313, recall: 98.3844, f1_score: 98.3791
+2022-03-27 11:40:09,413 - mmcls - INFO - Epoch [11][20/263]	lr: 1.000e-02, eta: 2:14:06, time: 1.658, data_time: 0.119, memory: 8636, loss: 0.4811
+2022-03-27 11:40:40,315 - mmcls - INFO - Epoch [11][40/263]	lr: 1.000e-02, eta: 2:13:36, time: 1.545, data_time: 0.001, memory: 8636, loss: 0.5633
+2022-03-27 11:41:11,056 - mmcls - INFO - Epoch [11][60/263]	lr: 1.000e-02, eta: 2:13:05, time: 1.537, data_time: 0.001, memory: 8636, loss: 0.6055
+2022-03-27 11:41:41,905 - mmcls - INFO - Epoch [11][80/263]	lr: 1.000e-02, eta: 2:12:35, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.5304
+2022-03-27 11:42:12,668 - mmcls - INFO - Epoch [11][100/263]	lr: 1.000e-02, eta: 2:12:04, time: 1.539, data_time: 0.001, memory: 8636, loss: 0.5735
+2022-03-27 11:42:43,404 - mmcls - INFO - Epoch [11][120/263]	lr: 1.000e-02, eta: 2:11:33, time: 1.536, data_time: 0.001, memory: 8636, loss: 0.4751
+2022-03-27 11:43:14,464 - mmcls - INFO - Epoch [11][140/263]	lr: 1.000e-02, eta: 2:11:03, time: 1.553, data_time: 0.001, memory: 8636, loss: 0.5488
+2022-03-27 11:43:45,438 - mmcls - INFO - Epoch [11][160/263]	lr: 1.000e-02, eta: 2:10:33, time: 1.549, data_time: 0.001, memory: 8636, loss: 0.6523
+2022-03-27 11:44:16,369 - mmcls - INFO - Epoch [11][180/263]	lr: 1.000e-02, eta: 2:10:03, time: 1.546, data_time: 0.001, memory: 8636, loss: 0.5954
+2022-03-27 11:44:47,112 - mmcls - INFO - Epoch [11][200/263]	lr: 1.000e-02, eta: 2:09:32, time: 1.537, data_time: 0.001, memory: 8636, loss: 0.5672
+2022-03-27 11:45:17,929 - mmcls - INFO - Epoch [11][220/263]	lr: 1.000e-02, eta: 2:09:01, time: 1.541, data_time: 0.001, memory: 8636, loss: 0.5558
+2022-03-27 11:45:48,719 - mmcls - INFO - Epoch [11][240/263]	lr: 1.000e-02, eta: 2:08:31, time: 1.539, data_time: 0.001, memory: 8636, loss: 0.5516
+2022-03-27 11:46:19,619 - mmcls - INFO - Epoch [11][260/263]	lr: 1.000e-02, eta: 2:08:00, time: 1.545, data_time: 0.001, memory: 8636, loss: 0.6274
+2022-03-27 11:46:23,041 - mmcls - INFO - Saving checkpoint at 11 epochs
+2022-03-27 11:46:55,354 - mmcls - INFO - Epoch(val) [11][57]	accuracy_top-1: 98.4401, accuracy_top-2: 99.7215, precision: 98.4501, recall: 98.4401, f1_score: 98.4378
+2022-03-27 11:47:28,880 - mmcls - INFO - Epoch [12][20/263]	lr: 1.000e-02, eta: 2:07:22, time: 1.676, data_time: 0.121, memory: 8636, loss: 0.6020
+2022-03-27 11:47:59,674 - mmcls - INFO - Epoch [12][40/263]	lr: 1.000e-02, eta: 2:06:51, time: 1.539, data_time: 0.001, memory: 8636, loss: 0.7294
+2022-03-27 11:48:30,511 - mmcls - INFO - Epoch [12][60/263]	lr: 1.000e-02, eta: 2:06:21, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.4985
+2022-03-27 11:49:01,346 - mmcls - INFO - Epoch [12][80/263]	lr: 1.000e-02, eta: 2:05:50, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.5709
+2022-03-27 11:49:32,142 - mmcls - INFO - Epoch [12][100/263]	lr: 1.000e-02, eta: 2:05:20, time: 1.539, data_time: 0.001, memory: 8636, loss: 0.5295
+2022-03-27 11:50:02,941 - mmcls - INFO - Epoch [12][120/263]	lr: 1.000e-02, eta: 2:04:49, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.5103
+2022-03-27 11:50:33,786 - mmcls - INFO - Epoch [12][140/263]	lr: 1.000e-02, eta: 2:04:19, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.5708
+2022-03-27 11:51:04,551 - mmcls - INFO - Epoch [12][160/263]	lr: 1.000e-02, eta: 2:03:48, time: 1.538, data_time: 0.001, memory: 8636, loss: 0.5008
+2022-03-27 11:51:35,369 - mmcls - INFO - Epoch [12][180/263]	lr: 1.000e-02, eta: 2:03:18, time: 1.541, data_time: 0.001, memory: 8636, loss: 0.5651
+2022-03-27 11:52:06,196 - mmcls - INFO - Epoch [12][200/263]	lr: 1.000e-02, eta: 2:02:47, time: 1.541, data_time: 0.001, memory: 8636, loss: 0.5777
+2022-03-27 11:52:37,063 - mmcls - INFO - Epoch [12][220/263]	lr: 1.000e-02, eta: 2:02:17, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.6463
+2022-03-27 11:53:08,004 - mmcls - INFO - Epoch [12][240/263]	lr: 1.000e-02, eta: 2:01:46, time: 1.547, data_time: 0.001, memory: 8636, loss: 0.5877
+2022-03-27 11:53:38,815 - mmcls - INFO - Epoch [12][260/263]	lr: 1.000e-02, eta: 2:01:16, time: 1.541, data_time: 0.001, memory: 8636, loss: 0.5746
+2022-03-27 11:53:42,224 - mmcls - INFO - Saving checkpoint at 12 epochs
+2022-03-27 11:54:14,084 - mmcls - INFO - Epoch(val) [12][57]	accuracy_top-1: 98.6072, accuracy_top-2: 99.7215, precision: 98.6309, recall: 98.6072, f1_score: 98.6059
+2022-03-27 11:54:47,334 - mmcls - INFO - Epoch [13][20/263]	lr: 1.000e-02, eta: 2:00:37, time: 1.661, data_time: 0.120, memory: 8636, loss: 0.5441
+2022-03-27 11:55:18,173 - mmcls - INFO - Epoch [13][40/263]	lr: 1.000e-02, eta: 2:00:07, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.4974
+2022-03-27 11:55:49,027 - mmcls - INFO - Epoch [13][60/263]	lr: 1.000e-02, eta: 1:59:36, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.5247
+2022-03-27 11:56:19,859 - mmcls - INFO - Epoch [13][80/263]	lr: 1.000e-02, eta: 1:59:06, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.5648
+2022-03-27 11:56:50,881 - mmcls - INFO - Epoch [13][100/263]	lr: 1.000e-02, eta: 1:58:35, time: 1.551, data_time: 0.001, memory: 8636, loss: 0.5330
+2022-03-27 11:57:21,748 - mmcls - INFO - Epoch [13][120/263]	lr: 1.000e-02, eta: 1:58:05, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.5300
+2022-03-27 11:57:52,672 - mmcls - INFO - Epoch [13][140/263]	lr: 1.000e-02, eta: 1:57:34, time: 1.546, data_time: 0.001, memory: 8636, loss: 0.5461
+2022-03-27 11:58:23,376 - mmcls - INFO - Epoch [13][160/263]	lr: 1.000e-02, eta: 1:57:04, time: 1.535, data_time: 0.001, memory: 8636, loss: 0.5325
+2022-03-27 11:58:54,221 - mmcls - INFO - Epoch [13][180/263]	lr: 1.000e-02, eta: 1:56:33, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.5434
+2022-03-27 11:59:25,035 - mmcls - INFO - Epoch [13][200/263]	lr: 1.000e-02, eta: 1:56:03, time: 1.541, data_time: 0.001, memory: 8636, loss: 0.6054
+2022-03-27 11:59:55,949 - mmcls - INFO - Epoch [13][220/263]	lr: 1.000e-02, eta: 1:55:32, time: 1.546, data_time: 0.001, memory: 8636, loss: 0.5702
+2022-03-27 12:00:26,827 - mmcls - INFO - Epoch [13][240/263]	lr: 1.000e-02, eta: 1:55:02, time: 1.544, data_time: 0.001, memory: 8636, loss: 0.5963
+2022-03-27 12:00:57,674 - mmcls - INFO - Epoch [13][260/263]	lr: 1.000e-02, eta: 1:54:31, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.5142
+2022-03-27 12:01:01,063 - mmcls - INFO - Saving checkpoint at 13 epochs
+2022-03-27 12:01:32,788 - mmcls - INFO - Epoch(val) [13][57]	accuracy_top-1: 98.9972, accuracy_top-2: 99.8329, precision: 99.0002, recall: 98.9972, f1_score: 98.9970
+2022-03-27 12:02:06,249 - mmcls - INFO - Epoch [14][20/263]	lr: 1.000e-02, eta: 1:53:53, time: 1.672, data_time: 0.121, memory: 8636, loss: 0.5882
+2022-03-27 12:02:37,210 - mmcls - INFO - Epoch [14][40/263]	lr: 1.000e-02, eta: 1:53:23, time: 1.548, data_time: 0.001, memory: 8636, loss: 0.5547
+2022-03-27 12:03:08,108 - mmcls - INFO - Epoch [14][60/263]	lr: 1.000e-02, eta: 1:52:52, time: 1.545, data_time: 0.001, memory: 8636, loss: 0.5243
+2022-03-27 12:03:38,978 - mmcls - INFO - Epoch [14][80/263]	lr: 1.000e-02, eta: 1:52:22, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.5652
+2022-03-27 12:04:09,779 - mmcls - INFO - Epoch [14][100/263]	lr: 1.000e-02, eta: 1:51:51, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.5897
+2022-03-27 12:04:40,675 - mmcls - INFO - Epoch [14][120/263]	lr: 1.000e-02, eta: 1:51:21, time: 1.545, data_time: 0.001, memory: 8636, loss: 0.5754
+2022-03-27 12:05:11,469 - mmcls - INFO - Epoch [14][140/263]	lr: 1.000e-02, eta: 1:50:50, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.6336
+2022-03-27 12:05:42,436 - mmcls - INFO - Epoch [14][160/263]	lr: 1.000e-02, eta: 1:50:20, time: 1.548, data_time: 0.001, memory: 8636, loss: 0.4358
+2022-03-27 12:06:13,242 - mmcls - INFO - Epoch [14][180/263]	lr: 1.000e-02, eta: 1:49:49, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.5257
+2022-03-27 12:06:43,986 - mmcls - INFO - Epoch [14][200/263]	lr: 1.000e-02, eta: 1:49:19, time: 1.537, data_time: 0.001, memory: 8636, loss: 0.4864
+2022-03-27 12:07:14,775 - mmcls - INFO - Epoch [14][220/263]	lr: 1.000e-02, eta: 1:48:48, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.5583
+2022-03-27 12:07:45,618 - mmcls - INFO - Epoch [14][240/263]	lr: 1.000e-02, eta: 1:48:17, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.4794
+2022-03-27 12:08:16,407 - mmcls - INFO - Epoch [14][260/263]	lr: 1.000e-02, eta: 1:47:47, time: 1.539, data_time: 0.001, memory: 8636, loss: 0.5522
+2022-03-27 12:08:19,805 - mmcls - INFO - Saving checkpoint at 14 epochs
+2022-03-27 12:08:51,694 - mmcls - INFO - Epoch(val) [14][57]	accuracy_top-1: 99.1644, accuracy_top-2: 99.8329, precision: 99.1701, recall: 99.1643, f1_score: 99.1644
+2022-03-27 12:09:25,065 - mmcls - INFO - Epoch [15][20/263]	lr: 1.000e-02, eta: 1:47:09, time: 1.668, data_time: 0.119, memory: 8636, loss: 0.5708
+2022-03-27 12:09:56,157 - mmcls - INFO - Epoch [15][40/263]	lr: 1.000e-02, eta: 1:46:39, time: 1.555, data_time: 0.001, memory: 8636, loss: 0.5319
+2022-03-27 12:10:27,034 - mmcls - INFO - Epoch [15][60/263]	lr: 1.000e-02, eta: 1:46:08, time: 1.543, data_time: 0.000, memory: 8636, loss: 0.6717
+2022-03-27 12:10:57,913 - mmcls - INFO - Epoch [15][80/263]	lr: 1.000e-02, eta: 1:45:38, time: 1.545, data_time: 0.001, memory: 8636, loss: 0.5557
+2022-03-27 12:11:28,742 - mmcls - INFO - Epoch [15][100/263]	lr: 1.000e-02, eta: 1:45:07, time: 1.541, data_time: 0.000, memory: 8636, loss: 0.5322
+2022-03-27 12:11:59,639 - mmcls - INFO - Epoch [15][120/263]	lr: 1.000e-02, eta: 1:44:37, time: 1.545, data_time: 0.001, memory: 8636, loss: 0.4685
+2022-03-27 12:12:30,484 - mmcls - INFO - Epoch [15][140/263]	lr: 1.000e-02, eta: 1:44:06, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.5696
+2022-03-27 12:13:01,322 - mmcls - INFO - Epoch [15][160/263]	lr: 1.000e-02, eta: 1:43:36, time: 1.541, data_time: 0.000, memory: 8636, loss: 0.6120
+2022-03-27 12:13:32,119 - mmcls - INFO - Epoch [15][180/263]	lr: 1.000e-02, eta: 1:43:05, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.5037
+2022-03-27 12:14:02,971 - mmcls - INFO - Epoch [15][200/263]	lr: 1.000e-02, eta: 1:42:34, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.5304
+2022-03-27 12:14:33,928 - mmcls - INFO - Epoch [15][220/263]	lr: 1.000e-02, eta: 1:42:04, time: 1.548, data_time: 0.001, memory: 8636, loss: 0.6068
+2022-03-27 12:15:04,755 - mmcls - INFO - Epoch [15][240/263]	lr: 1.000e-02, eta: 1:41:33, time: 1.541, data_time: 0.001, memory: 8636, loss: 0.6461
+2022-03-27 12:15:35,636 - mmcls - INFO - Epoch [15][260/263]	lr: 1.000e-02, eta: 1:41:03, time: 1.544, data_time: 0.001, memory: 8636, loss: 0.6031
+2022-03-27 12:15:39,043 - mmcls - INFO - Saving checkpoint at 15 epochs
+2022-03-27 12:16:10,794 - mmcls - INFO - Epoch(val) [15][57]	accuracy_top-1: 98.4958, accuracy_top-2: 99.8329, precision: 98.5216, recall: 98.4958, f1_score: 98.4953
+2022-03-27 12:16:44,110 - mmcls - INFO - Epoch [16][20/263]	lr: 1.000e-03, eta: 1:40:25, time: 1.665, data_time: 0.119, memory: 8636, loss: 0.5933
+2022-03-27 12:17:14,974 - mmcls - INFO - Epoch [16][40/263]	lr: 1.000e-03, eta: 1:39:55, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.5642
+2022-03-27 12:17:45,768 - mmcls - INFO - Epoch [16][60/263]	lr: 1.000e-03, eta: 1:39:24, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.5741
+2022-03-27 12:18:16,598 - mmcls - INFO - Epoch [16][80/263]	lr: 1.000e-03, eta: 1:38:54, time: 1.541, data_time: 0.000, memory: 8636, loss: 0.5253
+2022-03-27 12:18:47,491 - mmcls - INFO - Epoch [16][100/263]	lr: 1.000e-03, eta: 1:38:23, time: 1.545, data_time: 0.001, memory: 8636, loss: 0.6277
+2022-03-27 12:19:18,360 - mmcls - INFO - Epoch [16][120/263]	lr: 1.000e-03, eta: 1:37:53, time: 1.543, data_time: 0.001, memory: 8636, loss: 0.5010
+2022-03-27 12:19:49,149 - mmcls - INFO - Epoch [16][140/263]	lr: 1.000e-03, eta: 1:37:22, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.5829
+2022-03-27 12:20:19,997 - mmcls - INFO - Epoch [16][160/263]	lr: 1.000e-03, eta: 1:36:51, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.6031
+2022-03-27 12:20:50,790 - mmcls - INFO - Epoch [16][180/263]	lr: 1.000e-03, eta: 1:36:21, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.4889
+2022-03-27 12:21:21,751 - mmcls - INFO - Epoch [16][200/263]	lr: 1.000e-03, eta: 1:35:50, time: 1.548, data_time: 0.001, memory: 8636, loss: 0.4910
+2022-03-27 12:21:52,559 - mmcls - INFO - Epoch [16][220/263]	lr: 1.000e-03, eta: 1:35:20, time: 1.540, data_time: 0.001, memory: 8636, loss: 0.5548
+2022-03-27 12:22:23,452 - mmcls - INFO - Epoch [16][240/263]	lr: 1.000e-03, eta: 1:34:49, time: 1.544, data_time: 0.001, memory: 8636, loss: 0.5312
+2022-03-27 12:22:54,332 - mmcls - INFO - Epoch [16][260/263]	lr: 1.000e-03, eta: 1:34:19, time: 1.544, data_time: 0.001, memory: 8636, loss: 0.5181
+2022-03-27 12:22:57,730 - mmcls - INFO - Saving checkpoint at 16 epochs
+2022-03-27 12:23:29,549 - mmcls - INFO - Epoch(val) [16][57]	accuracy_top-1: 99.1644, accuracy_top-2: 99.8886, precision: 99.1726, recall: 99.1643, f1_score: 99.1645
+2022-03-27 12:24:02,732 - mmcls - INFO - Epoch [17][20/263]	lr: 1.000e-03, eta: 1:33:41, time: 1.658, data_time: 0.118, memory: 8636, loss: 0.5129
+2022-03-27 12:24:33,562 - mmcls - INFO - Epoch [17][40/263]	lr: 1.000e-03, eta: 1:33:11, time: 1.542, data_time: 0.001, memory: 8636, loss: 0.5398
+2022-03-27 12:25:04,339 - mmcls - INFO - Epoch [17][60/263]	lr: 1.000e-03, eta: 1:32:40, time: 1.539, data_time: 0.001, memory: 8636, loss: 0.5387
+2022-03-27 12:25:35,097 - mmcls - INFO - Epoch [17][80/263]	lr: 1.000e-03, eta: 1:32:09, time: 1.538, data_time: 0.001, memory: 8636, loss: 0.6055
+2022-03-27 12:26:05,877 - mmcls - INFO - Epoch [17][100/263]	lr: 1.000e-03, eta: 1:31:39, time: 1.539, data_time: 0.001, memory: 8636, loss: 0.5471
+2022-03-27 12:26:36,810 - mmcls - INFO - Epoch [17][120/263]	lr: 1.000e-03, eta: 1:31:08, time: 1.547, data_time: 0.001, memory: 8636, loss: 0.5816
+2022-03-27 12:27:07,599 - mmcls - INFO - Epoch [17][140/263]	lr: 1.000e-03, eta: 1:30:38, time: 1.539, data_time: 0.001, memory: 8636, loss: 0.4799
+2022-03-27 12:27:38,484 - mmcls - INFO - Epoch [17][160/263]	lr: 1.000e-03, eta: 1:30:07, time: 1.544, data_time: 0.001, memory: 8636, loss: 0.5214
+2022-03-27 12:28:09,686 - mmcls - INFO - Epoch [17][180/263]	lr: 1.000e-03, eta: 1:29:37, time: 1.560, data_time: 0.001, memory: 8636, loss: 0.5068
+2022-03-27 12:28:40,876 - mmcls - INFO - Epoch [17][200/263]	lr: 1.000e-03, eta: 1:29:06, time: 1.560, data_time: 0.001, memory: 8636, loss: 0.5078
+2022-03-27 12:29:12,048 - mmcls - INFO - Epoch [17][220/263]	lr: 1.000e-03, eta: 1:28:36, time: 1.559, data_time: 0.001, memory: 8636, loss: 0.5570
+2022-03-27 12:29:43,338 - mmcls - INFO - Epoch [17][240/263]	lr: 1.000e-03, eta: 1:28:06, time: 1.564, data_time: 0.001, memory: 8636, loss: 0.5223
+2022-03-27 12:30:14,168 - mmcls - INFO - Epoch [17][260/263]	lr: 1.000e-03, eta: 1:27:35, time: 1.541, data_time: 0.001, memory: 8636, loss: 0.4648
+2022-03-27 12:30:17,616 - mmcls - INFO - Saving checkpoint at 17 epochs
+2022-03-27 12:30:49,781 - mmcls - INFO - Epoch(val) [17][57]	accuracy_top-1: 99.2201, accuracy_top-2: 99.8329, precision: 99.2242, recall: 99.2201, f1_score: 99.2196
+2022-03-27 12:31:23,392 - mmcls - INFO - Epoch [18][20/263]	lr: 1.000e-03, eta: 1:26:59, time: 1.680, data_time: 0.118, memory: 8636, loss: 0.5145
+2022-03-27 12:31:54,392 - mmcls - INFO - Epoch [18][40/263]	lr: 1.000e-03, eta: 1:26:28, time: 1.550, data_time: 0.001, memory: 8636, loss: 0.5730
+2022-03-27 12:32:25,701 - mmcls - INFO - Epoch [18][60/263]	lr: 1.000e-03, eta: 1:25:58, time: 1.565, data_time: 0.001, memory: 8636, loss: 0.5115
+2022-03-27 12:32:57,020 - mmcls - INFO - Epoch [18][80/263]	lr: 1.000e-03, eta: 1:25:28, time: 1.566, data_time: 0.001, memory: 8636, loss: 0.5249
+2022-03-27 12:33:28,302 - mmcls - INFO - Epoch [18][100/263]	lr: 1.000e-03, eta: 1:24:57, time: 1.564, data_time: 0.001, memory: 8636, loss: 0.5143
+2022-03-27 12:33:59,619 - mmcls - INFO - Epoch [18][120/263]	lr: 1.000e-03, eta: 1:24:27, time: 1.566, data_time: 0.001, memory: 8636, loss: 0.5385
+2022-03-27 12:34:30,983 - mmcls - INFO - Epoch [18][140/263]	lr: 1.000e-03, eta: 1:23:57, time: 1.568, data_time: 0.001, memory: 8636, loss: 0.5237
+2022-03-27 12:35:02,286 - mmcls - INFO - Epoch [18][160/263]	lr: 1.000e-03, eta: 1:23:26, time: 1.565, data_time: 0.001, memory: 8636, loss: 0.4802
+2022-03-27 12:35:33,583 - mmcls - INFO - Epoch [18][180/263]	lr: 1.000e-03, eta: 1:22:56, time: 1.565, data_time: 0.001, memory: 8636, loss: 0.6104
+2022-03-27 12:36:04,933 - mmcls - INFO - Epoch [18][200/263]	lr: 1.000e-03, eta: 1:22:26, time: 1.568, data_time: 0.001, memory: 8636, loss: 0.5071
+2022-03-27 12:36:36,506 - mmcls - INFO - Epoch [18][220/263]	lr: 1.000e-03, eta: 1:21:56, time: 1.579, data_time: 0.001, memory: 8636, loss: 0.5316
+2022-03-27 12:37:07,953 - mmcls - INFO - Epoch [18][240/263]	lr: 1.000e-03, eta: 1:21:25, time: 1.572, data_time: 0.001, memory: 8636, loss: 0.5882
+2022-03-27 12:37:39,379 - mmcls - INFO - Epoch [18][260/263]	lr: 1.000e-03, eta: 1:20:55, time: 1.571, data_time: 0.001, memory: 8636, loss: 0.5329
+2022-03-27 12:37:42,839 - mmcls - INFO - Saving checkpoint at 18 epochs
+2022-03-27 12:38:15,390 - mmcls - INFO - Epoch(val) [18][57]	accuracy_top-1: 99.2758, accuracy_top-2: 99.8886, precision: 99.2775, recall: 99.2758, f1_score: 99.2759
+2022-03-27 12:38:49,178 - mmcls - INFO - Epoch [19][20/263]	lr: 1.000e-03, eta: 1:20:19, time: 1.689, data_time: 0.124, memory: 8636, loss: 0.5312
+2022-03-27 12:39:20,524 - mmcls - INFO - Epoch [19][40/263]	lr: 1.000e-03, eta: 1:19:48, time: 1.567, data_time: 0.001, memory: 8636, loss: 0.5216
+2022-03-27 12:39:51,826 - mmcls - INFO - Epoch [19][60/263]	lr: 1.000e-03, eta: 1:19:18, time: 1.565, data_time: 0.001, memory: 8636, loss: 0.5676
+2022-03-27 12:40:23,147 - mmcls - INFO - Epoch [19][80/263]	lr: 1.000e-03, eta: 1:18:48, time: 1.566, data_time: 0.001, memory: 8636, loss: 0.5801
+2022-03-27 12:40:54,667 - mmcls - INFO - Epoch [19][100/263]	lr: 1.000e-03, eta: 1:18:17, time: 1.576, data_time: 0.001, memory: 8636, loss: 0.4995
+2022-03-27 12:41:26,015 - mmcls - INFO - Epoch [19][120/263]	lr: 1.000e-03, eta: 1:17:47, time: 1.567, data_time: 0.001, memory: 8636, loss: 0.4845
+2022-03-27 12:41:57,462 - mmcls - INFO - Epoch [19][140/263]	lr: 1.000e-03, eta: 1:17:17, time: 1.572, data_time: 0.001, memory: 8636, loss: 0.4958
+2022-03-27 12:42:28,903 - mmcls - INFO - Epoch [19][160/263]	lr: 1.000e-03, eta: 1:16:46, time: 1.572, data_time: 0.001, memory: 8636, loss: 0.5308
+2022-03-27 12:43:00,003 - mmcls - INFO - Epoch [19][180/263]	lr: 1.000e-03, eta: 1:16:16, time: 1.555, data_time: 0.001, memory: 8636, loss: 0.5084
+2022-03-27 12:43:31,219 - mmcls - INFO - Epoch [19][200/263]	lr: 1.000e-03, eta: 1:15:45, time: 1.561, data_time: 0.001, memory: 8636, loss: 0.6024
+2022-03-27 12:44:02,303 - mmcls - INFO - Epoch [19][220/263]	lr: 1.000e-03, eta: 1:15:15, time: 1.554, data_time: 0.001, memory: 8636, loss: 0.5778
+2022-03-27 12:44:33,509 - mmcls - INFO - Epoch [19][240/263]	lr: 1.000e-03, eta: 1:14:44, time: 1.560, data_time: 0.001, memory: 8636, loss: 0.4979
+2022-03-27 12:45:04,805 - mmcls - INFO - Epoch [19][260/263]	lr: 1.000e-03, eta: 1:14:14, time: 1.565, data_time: 0.001, memory: 8636, loss: 0.5581
+2022-03-27 12:45:08,272 - mmcls - INFO - Saving checkpoint at 19 epochs
+2022-03-27 12:45:40,338 - mmcls - INFO - Epoch(val) [19][57]	accuracy_top-1: 99.3315, accuracy_top-2: 99.8886, precision: 99.3382, recall: 99.3315, f1_score: 99.3315
+2022-03-27 12:46:14,034 - mmcls - INFO - Epoch [20][20/263]	lr: 1.000e-03, eta: 1:13:37, time: 1.684, data_time: 0.125, memory: 8636, loss: 0.4952
+2022-03-27 12:46:45,221 - mmcls - INFO - Epoch [20][40/263]	lr: 1.000e-03, eta: 1:13:07, time: 1.560, data_time: 0.001, memory: 8636, loss: 0.5183
+2022-03-27 12:47:16,528 - mmcls - INFO - Epoch [20][60/263]	lr: 1.000e-03, eta: 1:12:36, time: 1.565, data_time: 0.001, memory: 8636, loss: 0.6332
+2022-03-27 12:47:47,652 - mmcls - INFO - Epoch [20][80/263]	lr: 1.000e-03, eta: 1:12:06, time: 1.556, data_time: 0.001, memory: 8636, loss: 0.5355
+2022-03-27 12:48:18,948 - mmcls - INFO - Epoch [20][100/263]	lr: 1.000e-03, eta: 1:11:35, time: 1.565, data_time: 0.001, memory: 8636, loss: 0.4553
+2022-03-27 12:48:50,167 - mmcls - INFO - Epoch [20][120/263]	lr: 1.000e-03, eta: 1:11:05, time: 1.561, data_time: 0.001, memory: 8636, loss: 0.5971
+2022-03-27 12:49:21,356 - mmcls - INFO - Epoch [20][140/263]	lr: 1.000e-03, eta: 1:10:34, time: 1.560, data_time: 0.001, memory: 8636, loss: 0.5612
+2022-03-27 12:49:52,486 - mmcls - INFO - Epoch [20][160/263]	lr: 1.000e-03, eta: 1:10:04, time: 1.556, data_time: 0.001, memory: 8636, loss: 0.4959
+2022-03-27 12:50:23,522 - mmcls - INFO - Epoch [20][180/263]	lr: 1.000e-03, eta: 1:09:33, time: 1.552, data_time: 0.001, memory: 8636, loss: 0.5305
+2022-03-27 12:50:54,946 - mmcls - INFO - Epoch [20][200/263]	lr: 1.000e-03, eta: 1:09:03, time: 1.571, data_time: 0.001, memory: 8636, loss: 0.5142
+2022-03-27 12:51:26,034 - mmcls - INFO - Epoch [20][220/263]	lr: 1.000e-03, eta: 1:08:32, time: 1.554, data_time: 0.001, memory: 8636, loss: 0.6121
+2022-03-27 12:51:57,433 - mmcls - INFO - Epoch [20][240/263]	lr: 1.000e-03, eta: 1:08:02, time: 1.570, data_time: 0.001, memory: 8636, loss: 0.5464
+2022-03-27 12:52:28,550 - mmcls - INFO - Epoch [20][260/263]	lr: 1.000e-03, eta: 1:07:31, time: 1.556, data_time: 0.001, memory: 8636, loss: 0.5650
+2022-03-27 12:52:32,006 - mmcls - INFO - Saving checkpoint at 20 epochs
+2022-03-27 12:53:04,137 - mmcls - INFO - Epoch(val) [20][57]	accuracy_top-1: 99.1086, accuracy_top-2: 99.8886, precision: 99.1169, recall: 99.1086, f1_score: 99.1085
+2022-03-27 12:53:37,862 - mmcls - INFO - Epoch [21][20/263]	lr: 1.000e-04, eta: 1:06:55, time: 1.685, data_time: 0.124, memory: 8636, loss: 0.6093
+2022-03-27 12:54:08,993 - mmcls - INFO - Epoch [21][40/263]	lr: 1.000e-04, eta: 1:06:24, time: 1.557, data_time: 0.001, memory: 8636, loss: 0.5367
+2022-03-27 12:54:40,388 - mmcls - INFO - Epoch [21][60/263]	lr: 1.000e-04, eta: 1:05:54, time: 1.569, data_time: 0.001, memory: 8636, loss: 0.5369
+2022-03-27 12:55:11,517 - mmcls - INFO - Epoch [21][80/263]	lr: 1.000e-04, eta: 1:05:23, time: 1.556, data_time: 0.001, memory: 8636, loss: 0.5459
+2022-03-27 12:55:42,925 - mmcls - INFO - Epoch [21][100/263]	lr: 1.000e-04, eta: 1:04:53, time: 1.571, data_time: 0.001, memory: 8636, loss: 0.5465
+2022-03-27 12:56:14,111 - mmcls - INFO - Epoch [21][120/263]	lr: 1.000e-04, eta: 1:04:22, time: 1.559, data_time: 0.000, memory: 8636, loss: 0.5552
+2022-03-27 12:56:45,477 - mmcls - INFO - Epoch [21][140/263]	lr: 1.000e-04, eta: 1:03:52, time: 1.568, data_time: 0.001, memory: 8636, loss: 0.5299
+2022-03-27 12:57:16,668 - mmcls - INFO - Epoch [21][160/263]	lr: 1.000e-04, eta: 1:03:21, time: 1.559, data_time: 0.001, memory: 8636, loss: 0.5354
+2022-03-27 12:57:47,618 - mmcls - INFO - Epoch [21][180/263]	lr: 1.000e-04, eta: 1:02:50, time: 1.548, data_time: 0.001, memory: 8636, loss: 0.5620
+2022-03-27 12:58:19,002 - mmcls - INFO - Epoch [21][200/263]	lr: 1.000e-04, eta: 1:02:20, time: 1.569, data_time: 0.001, memory: 8636, loss: 0.5742
+2022-03-27 12:58:50,165 - mmcls - INFO - Epoch [21][220/263]	lr: 1.000e-04, eta: 1:01:49, time: 1.558, data_time: 0.001, memory: 8636, loss: 0.5349
+2022-03-27 12:59:21,308 - mmcls - INFO - Epoch [21][240/263]	lr: 1.000e-04, eta: 1:01:19, time: 1.557, data_time: 0.001, memory: 8636, loss: 0.5146
+2022-03-27 12:59:52,575 - mmcls - INFO - Epoch [21][260/263]	lr: 1.000e-04, eta: 1:00:48, time: 1.563, data_time: 0.001, memory: 8636, loss: 0.5090
+2022-03-27 12:59:56,049 - mmcls - INFO - Saving checkpoint at 21 epochs
+2022-03-27 13:00:28,012 - mmcls - INFO - Epoch(val) [21][57]	accuracy_top-1: 99.3315, accuracy_top-2: 99.8329, precision: 99.3368, recall: 99.3315, f1_score: 99.3313
+2022-03-27 13:01:01,863 - mmcls - INFO - Epoch [22][20/263]	lr: 1.000e-04, eta: 1:00:12, time: 1.692, data_time: 0.126, memory: 8636, loss: 0.4717
+2022-03-27 13:01:32,875 - mmcls - INFO - Epoch [22][40/263]	lr: 1.000e-04, eta: 0:59:41, time: 1.551, data_time: 0.001, memory: 8636, loss: 0.5531
+2022-03-27 13:02:04,238 - mmcls - INFO - Epoch [22][60/263]	lr: 1.000e-04, eta: 0:59:11, time: 1.568, data_time: 0.001, memory: 8636, loss: 0.5242
+2022-03-27 13:02:35,384 - mmcls - INFO - Epoch [22][80/263]	lr: 1.000e-04, eta: 0:58:40, time: 1.557, data_time: 0.001, memory: 8636, loss: 0.5042
+2022-03-27 13:03:06,650 - mmcls - INFO - Epoch [22][100/263]	lr: 1.000e-04, eta: 0:58:09, time: 1.564, data_time: 0.001, memory: 8636, loss: 0.5398
+2022-03-27 13:03:37,934 - mmcls - INFO - Epoch [22][120/263]	lr: 1.000e-04, eta: 0:57:39, time: 1.564, data_time: 0.001, memory: 8636, loss: 0.5985
+2022-03-27 13:04:09,039 - mmcls - INFO - Epoch [22][140/263]	lr: 1.000e-04, eta: 0:57:08, time: 1.555, data_time: 0.001, memory: 8636, loss: 0.5595
+2022-03-27 13:04:40,434 - mmcls - INFO - Epoch [22][160/263]	lr: 1.000e-04, eta: 0:56:38, time: 1.569, data_time: 0.001, memory: 8636, loss: 0.5593
+2022-03-27 13:05:11,574 - mmcls - INFO - Epoch [22][180/263]	lr: 1.000e-04, eta: 0:56:07, time: 1.557, data_time: 0.001, memory: 8636, loss: 0.5567
+2022-03-27 13:05:42,922 - mmcls - INFO - Epoch [22][200/263]	lr: 1.000e-04, eta: 0:55:36, time: 1.568, data_time: 0.001, memory: 8636, loss: 0.5197
+2022-03-27 13:06:14,078 - mmcls - INFO - Epoch [22][220/263]	lr: 1.000e-04, eta: 0:55:06, time: 1.557, data_time: 0.001, memory: 8636, loss: 0.5613
+2022-03-27 13:06:45,379 - mmcls - INFO - Epoch [22][240/263]	lr: 1.000e-04, eta: 0:54:35, time: 1.565, data_time: 0.001, memory: 8636, loss: 0.5897
+2022-03-27 13:07:16,853 - mmcls - INFO - Epoch [22][260/263]	lr: 1.000e-04, eta: 0:54:05, time: 1.574, data_time: 0.001, memory: 8636, loss: 0.5192
+2022-03-27 13:07:20,310 - mmcls - INFO - Saving checkpoint at 22 epochs
+2022-03-27 13:07:52,336 - mmcls - INFO - Epoch(val) [22][57]	accuracy_top-1: 99.2758, accuracy_top-2: 99.8886, precision: 99.2819, recall: 99.2758, f1_score: 99.2755
+2022-03-27 13:08:26,040 - mmcls - INFO - Epoch [23][20/263]	lr: 1.000e-04, eta: 0:53:29, time: 1.684, data_time: 0.115, memory: 8636, loss: 0.5020
+2022-03-27 13:08:57,173 - mmcls - INFO - Epoch [23][40/263]	lr: 1.000e-04, eta: 0:52:58, time: 1.557, data_time: 0.001, memory: 8636, loss: 0.5429
+2022-03-27 13:09:28,529 - mmcls - INFO - Epoch [23][60/263]	lr: 1.000e-04, eta: 0:52:27, time: 1.568, data_time: 0.001, memory: 8636, loss: 0.5095
+2022-03-27 13:09:59,846 - mmcls - INFO - Epoch [23][80/263]	lr: 1.000e-04, eta: 0:51:57, time: 1.566, data_time: 0.001, memory: 8636, loss: 0.5307
+2022-03-27 13:10:31,086 - mmcls - INFO - Epoch [23][100/263]	lr: 1.000e-04, eta: 0:51:26, time: 1.562, data_time: 0.001, memory: 8636, loss: 0.5639
+2022-03-27 13:11:02,198 - mmcls - INFO - Epoch [23][120/263]	lr: 1.000e-04, eta: 0:50:55, time: 1.556, data_time: 0.001, memory: 8636, loss: 0.5502
+2022-03-27 13:11:33,279 - mmcls - INFO - Epoch [23][140/263]	lr: 1.000e-04, eta: 0:50:25, time: 1.554, data_time: 0.001, memory: 8636, loss: 0.6346
+2022-03-27 13:12:04,600 - mmcls - INFO - Epoch [23][160/263]	lr: 1.000e-04, eta: 0:49:54, time: 1.566, data_time: 0.001, memory: 8636, loss: 0.4971
+2022-03-27 13:12:35,703 - mmcls - INFO - Epoch [23][180/263]	lr: 1.000e-04, eta: 0:49:23, time: 1.555, data_time: 0.001, memory: 8636, loss: 0.5789
+2022-03-27 13:13:06,885 - mmcls - INFO - Epoch [23][200/263]	lr: 1.000e-04, eta: 0:48:53, time: 1.559, data_time: 0.001, memory: 8636, loss: 0.4981
+2022-03-27 13:13:38,176 - mmcls - INFO - Epoch [23][220/263]	lr: 1.000e-04, eta: 0:48:22, time: 1.564, data_time: 0.001, memory: 8636, loss: 0.5676
+2022-03-27 13:14:09,377 - mmcls - INFO - Epoch [23][240/263]	lr: 1.000e-04, eta: 0:47:51, time: 1.560, data_time: 0.001, memory: 8636, loss: 0.6544
+2022-03-27 13:14:40,693 - mmcls - INFO - Epoch [23][260/263]	lr: 1.000e-04, eta: 0:47:21, time: 1.566, data_time: 0.001, memory: 8636, loss: 0.5546
+2022-03-27 13:14:44,151 - mmcls - INFO - Saving checkpoint at 23 epochs
+2022-03-27 13:15:16,248 - mmcls - INFO - Epoch(val) [23][57]	accuracy_top-1: 99.3315, accuracy_top-2: 99.8886, precision: 99.3368, recall: 99.3315, f1_score: 99.3313
+2022-03-27 13:15:50,097 - mmcls - INFO - Epoch [24][20/263]	lr: 1.000e-04, eta: 0:46:45, time: 1.692, data_time: 0.122, memory: 8636, loss: 0.5367
+2022-03-27 13:16:21,511 - mmcls - INFO - Epoch [24][40/263]	lr: 1.000e-04, eta: 0:46:14, time: 1.571, data_time: 0.001, memory: 8636, loss: 0.4982
+2022-03-27 13:16:52,932 - mmcls - INFO - Epoch [24][60/263]	lr: 1.000e-04, eta: 0:45:43, time: 1.571, data_time: 0.001, memory: 8636, loss: 0.4691
+2022-03-27 13:17:24,343 - mmcls - INFO - Epoch [24][80/263]	lr: 1.000e-04, eta: 0:45:13, time: 1.571, data_time: 0.001, memory: 8636, loss: 0.5519
+2022-03-27 13:17:55,304 - mmcls - INFO - Epoch [24][100/263]	lr: 1.000e-04, eta: 0:44:42, time: 1.548, data_time: 0.001, memory: 8636, loss: 0.5701
+2022-03-27 13:18:26,480 - mmcls - INFO - Epoch [24][120/263]	lr: 1.000e-04, eta: 0:44:11, time: 1.559, data_time: 0.001, memory: 8636, loss: 0.5646
+2022-03-27 13:18:57,704 - mmcls - INFO - Epoch [24][140/263]	lr: 1.000e-04, eta: 0:43:41, time: 1.561, data_time: 0.001, memory: 8636, loss: 0.5934
+2022-03-27 13:19:28,896 - mmcls - INFO - Epoch [24][160/263]	lr: 1.000e-04, eta: 0:43:10, time: 1.559, data_time: 0.001, memory: 8636, loss: 0.5334
+2022-03-27 13:20:00,184 - mmcls - INFO - Epoch [24][180/263]	lr: 1.000e-04, eta: 0:42:39, time: 1.564, data_time: 0.001, memory: 8636, loss: 0.5570
+2022-03-27 13:20:31,388 - mmcls - INFO - Epoch [24][200/263]	lr: 1.000e-04, eta: 0:42:08, time: 1.560, data_time: 0.001, memory: 8636, loss: 0.6096
+2022-03-27 13:21:02,714 - mmcls - INFO - Epoch [24][220/263]	lr: 1.000e-04, eta: 0:41:38, time: 1.566, data_time: 0.001, memory: 8636, loss: 0.5467
+2022-03-27 13:21:34,116 - mmcls - INFO - Epoch [24][240/263]	lr: 1.000e-04, eta: 0:41:07, time: 1.570, data_time: 0.001, memory: 8636, loss: 0.5167
+2022-03-27 13:22:05,440 - mmcls - INFO - Epoch [24][260/263]	lr: 1.000e-04, eta: 0:40:36, time: 1.566, data_time: 0.001, memory: 8636, loss: 0.5689
+2022-03-27 13:22:08,892 - mmcls - INFO - Saving checkpoint at 24 epochs
+2022-03-27 13:22:40,584 - mmcls - INFO - Epoch(val) [24][57]	accuracy_top-1: 99.2201, accuracy_top-2: 99.8886, precision: 99.2243, recall: 99.2201, f1_score: 99.2197
+2022-03-27 13:23:14,203 - mmcls - INFO - Epoch [25][20/263]	lr: 1.000e-04, eta: 0:40:00, time: 1.679, data_time: 0.121, memory: 8636, loss: 0.4967
+2022-03-27 13:23:45,447 - mmcls - INFO - Epoch [25][40/263]	lr: 1.000e-04, eta: 0:39:30, time: 1.562, data_time: 0.001, memory: 8636, loss: 0.5260
+2022-03-27 13:24:16,864 - mmcls - INFO - Epoch [25][60/263]	lr: 1.000e-04, eta: 0:38:59, time: 1.571, data_time: 0.001, memory: 8636, loss: 0.5436
+2022-03-27 13:24:48,205 - mmcls - INFO - Epoch [25][80/263]	lr: 1.000e-04, eta: 0:38:28, time: 1.567, data_time: 0.001, memory: 8636, loss: 0.4138
+2022-03-27 13:25:19,525 - mmcls - INFO - Epoch [25][100/263]	lr: 1.000e-04, eta: 0:37:58, time: 1.566, data_time: 0.001, memory: 8636, loss: 0.5695
+2022-03-27 13:25:50,904 - mmcls - INFO - Epoch [25][120/263]	lr: 1.000e-04, eta: 0:37:27, time: 1.569, data_time: 0.001, memory: 8636, loss: 0.5111
+2022-03-27 13:26:22,177 - mmcls - INFO - Epoch [25][140/263]	lr: 1.000e-04, eta: 0:36:56, time: 1.564, data_time: 0.001, memory: 8636, loss: 0.4767
+2022-03-27 13:26:53,534 - mmcls - INFO - Epoch [25][160/263]	lr: 1.000e-04, eta: 0:36:25, time: 1.568, data_time: 0.001, memory: 8636, loss: 0.5632
+2022-03-27 13:27:24,808 - mmcls - INFO - Epoch [25][180/263]	lr: 1.000e-04, eta: 0:35:55, time: 1.563, data_time: 0.001, memory: 8636, loss: 0.6536
+2022-03-27 13:27:56,114 - mmcls - INFO - Epoch [25][200/263]	lr: 1.000e-04, eta: 0:35:24, time: 1.565, data_time: 0.001, memory: 8636, loss: 0.5484
+2022-03-27 13:28:27,519 - mmcls - INFO - Epoch [25][220/263]	lr: 1.000e-04, eta: 0:34:53, time: 1.570, data_time: 0.001, memory: 8636, loss: 0.5685
+2022-03-27 13:28:58,755 - mmcls - INFO - Epoch [25][240/263]	lr: 1.000e-04, eta: 0:34:23, time: 1.562, data_time: 0.001, memory: 8636, loss: 0.5230
+2022-03-27 13:29:30,065 - mmcls - INFO - Epoch [25][260/263]	lr: 1.000e-04, eta: 0:33:52, time: 1.565, data_time: 0.001, memory: 8636, loss: 0.5356
+2022-03-27 13:29:33,484 - mmcls - INFO - Saving checkpoint at 25 epochs
+2022-03-27 13:30:05,295 - mmcls - INFO - Epoch(val) [25][57]	accuracy_top-1: 99.2758, accuracy_top-2: 99.8886, precision: 99.2787, recall: 99.2758, f1_score: 99.2754
+2022-03-27 13:30:38,923 - mmcls - INFO - Epoch [26][20/263]	lr: 1.000e-05, eta: 0:33:16, time: 1.680, data_time: 0.124, memory: 8636, loss: 0.5037
+2022-03-27 13:31:10,229 - mmcls - INFO - Epoch [26][40/263]	lr: 1.000e-05, eta: 0:32:45, time: 1.565, data_time: 0.001, memory: 8636, loss: 0.5645
+2022-03-27 13:31:41,658 - mmcls - INFO - Epoch [26][60/263]	lr: 1.000e-05, eta: 0:32:14, time: 1.571, data_time: 0.001, memory: 8636, loss: 0.6105
+2022-03-27 13:32:13,115 - mmcls - INFO - Epoch [26][80/263]	lr: 1.000e-05, eta: 0:31:44, time: 1.573, data_time: 0.001, memory: 8636, loss: 0.5427
+2022-03-27 13:32:44,445 - mmcls - INFO - Epoch [26][100/263]	lr: 1.000e-05, eta: 0:31:13, time: 1.567, data_time: 0.001, memory: 8636, loss: 0.5234
+2022-03-27 13:33:15,722 - mmcls - INFO - Epoch [26][120/263]	lr: 1.000e-05, eta: 0:30:42, time: 1.564, data_time: 0.001, memory: 8636, loss: 0.5030
+2022-03-27 13:33:47,134 - mmcls - INFO - Epoch [26][140/263]	lr: 1.000e-05, eta: 0:30:11, time: 1.571, data_time: 0.001, memory: 8636, loss: 0.5583
+2022-03-27 13:34:18,535 - mmcls - INFO - Epoch [26][160/263]	lr: 1.000e-05, eta: 0:29:41, time: 1.570, data_time: 0.001, memory: 8636, loss: 0.6073
+2022-03-27 13:34:50,013 - mmcls - INFO - Epoch [26][180/263]	lr: 1.000e-05, eta: 0:29:10, time: 1.574, data_time: 0.001, memory: 8636, loss: 0.4559
+2022-03-27 13:35:21,336 - mmcls - INFO - Epoch [26][200/263]	lr: 1.000e-05, eta: 0:28:39, time: 1.566, data_time: 0.001, memory: 8636, loss: 0.4931
+2022-03-27 13:35:52,618 - mmcls - INFO - Epoch [26][220/263]	lr: 1.000e-05, eta: 0:28:08, time: 1.564, data_time: 0.001, memory: 8636, loss: 0.4610
+2022-03-27 13:36:23,855 - mmcls - INFO - Epoch [26][240/263]	lr: 1.000e-05, eta: 0:27:38, time: 1.562, data_time: 0.001, memory: 8636, loss: 0.5557
+2022-03-27 13:36:55,233 - mmcls - INFO - Epoch [26][260/263]	lr: 1.000e-05, eta: 0:27:07, time: 1.569, data_time: 0.001, memory: 8636, loss: 0.5412
+2022-03-27 13:36:58,680 - mmcls - INFO - Saving checkpoint at 26 epochs
+2022-03-27 13:37:30,456 - mmcls - INFO - Epoch(val) [26][57]	accuracy_top-1: 99.2758, accuracy_top-2: 99.8886, precision: 99.2776, recall: 99.2758, f1_score: 99.2754
+2022-03-27 13:38:04,205 - mmcls - INFO - Epoch [27][20/263]	lr: 1.000e-05, eta: 0:26:31, time: 1.686, data_time: 0.120, memory: 8636, loss: 0.5257
+2022-03-27 13:38:35,372 - mmcls - INFO - Epoch [27][40/263]	lr: 1.000e-05, eta: 0:26:00, time: 1.559, data_time: 0.001, memory: 8636, loss: 0.5245
+2022-03-27 13:39:06,773 - mmcls - INFO - Epoch [27][60/263]	lr: 1.000e-05, eta: 0:25:30, time: 1.570, data_time: 0.001, memory: 8636, loss: 0.6421
+2022-03-27 13:39:38,313 - mmcls - INFO - Epoch [27][80/263]	lr: 1.000e-05, eta: 0:24:59, time: 1.577, data_time: 0.001, memory: 8636, loss: 0.6251
+2022-03-27 13:40:09,643 - mmcls - INFO - Epoch [27][100/263]	lr: 1.000e-05, eta: 0:24:28, time: 1.567, data_time: 0.001, memory: 8636, loss: 0.6130
+2022-03-27 13:40:41,003 - mmcls - INFO - Epoch [27][120/263]	lr: 1.000e-05, eta: 0:23:57, time: 1.568, data_time: 0.001, memory: 8636, loss: 0.5505
+2022-03-27 13:41:12,376 - mmcls - INFO - Epoch [27][140/263]	lr: 1.000e-05, eta: 0:23:26, time: 1.569, data_time: 0.001, memory: 8636, loss: 0.6148
+2022-03-27 13:41:43,800 - mmcls - INFO - Epoch [27][160/263]	lr: 1.000e-05, eta: 0:22:56, time: 1.571, data_time: 0.000, memory: 8636, loss: 0.4920
+2022-03-27 13:42:15,169 - mmcls - INFO - Epoch [27][180/263]	lr: 1.000e-05, eta: 0:22:25, time: 1.568, data_time: 0.001, memory: 8636, loss: 0.5117
+2022-03-27 13:42:46,541 - mmcls - INFO - Epoch [27][200/263]	lr: 1.000e-05, eta: 0:21:54, time: 1.569, data_time: 0.001, memory: 8636, loss: 0.5209
+2022-03-27 13:43:17,898 - mmcls - INFO - Epoch [27][220/263]	lr: 1.000e-05, eta: 0:21:23, time: 1.568, data_time: 0.001, memory: 8636, loss: 0.5309
+2022-03-27 13:43:49,315 - mmcls - INFO - Epoch [27][240/263]	lr: 1.000e-05, eta: 0:20:53, time: 1.571, data_time: 0.001, memory: 8636, loss: 0.5856
+2022-03-27 13:44:20,778 - mmcls - INFO - Epoch [27][260/263]	lr: 1.000e-05, eta: 0:20:22, time: 1.573, data_time: 0.001, memory: 8636, loss: 0.5537
+2022-03-27 13:44:24,234 - mmcls - INFO - Saving checkpoint at 27 epochs
+2022-03-27 13:44:56,392 - mmcls - INFO - Epoch(val) [27][57]	accuracy_top-1: 99.3872, accuracy_top-2: 99.8886, precision: 99.3916, recall: 99.3872, f1_score: 99.3876
+2022-03-27 13:45:30,101 - mmcls - INFO - Epoch [28][20/263]	lr: 1.000e-05, eta: 0:19:46, time: 1.684, data_time: 0.123, memory: 8636, loss: 0.5211
+2022-03-27 13:46:01,407 - mmcls - INFO - Epoch [28][40/263]	lr: 1.000e-05, eta: 0:19:15, time: 1.566, data_time: 0.001, memory: 8636, loss: 0.6588
+2022-03-27 13:46:32,632 - mmcls - INFO - Epoch [28][60/263]	lr: 1.000e-05, eta: 0:18:44, time: 1.561, data_time: 0.000, memory: 8636, loss: 0.4750
+2022-03-27 13:47:03,845 - mmcls - INFO - Epoch [28][80/263]	lr: 1.000e-05, eta: 0:18:14, time: 1.561, data_time: 0.001, memory: 8636, loss: 0.5035
+2022-03-27 13:47:35,275 - mmcls - INFO - Epoch [28][100/263]	lr: 1.000e-05, eta: 0:17:43, time: 1.571, data_time: 0.001, memory: 8636, loss: 0.5893
+2022-03-27 13:48:06,561 - mmcls - INFO - Epoch [28][120/263]	lr: 1.000e-05, eta: 0:17:12, time: 1.565, data_time: 0.001, memory: 8636, loss: 0.5131
+2022-03-27 13:48:37,943 - mmcls - INFO - Epoch [28][140/263]	lr: 1.000e-05, eta: 0:16:41, time: 1.569, data_time: 0.001, memory: 8636, loss: 0.5674
+2022-03-27 13:49:09,110 - mmcls - INFO - Epoch [28][160/263]	lr: 1.000e-05, eta: 0:16:10, time: 1.558, data_time: 0.001, memory: 8636, loss: 0.5169
+2022-03-27 13:49:40,387 - mmcls - INFO - Epoch [28][180/263]	lr: 1.000e-05, eta: 0:15:39, time: 1.564, data_time: 0.001, memory: 8636, loss: 0.5564
+2022-03-27 13:50:11,699 - mmcls - INFO - Epoch [28][200/263]	lr: 1.000e-05, eta: 0:15:09, time: 1.566, data_time: 0.001, memory: 8636, loss: 0.5646
+2022-03-27 13:50:43,042 - mmcls - INFO - Epoch [28][220/263]	lr: 1.000e-05, eta: 0:14:38, time: 1.567, data_time: 0.001, memory: 8636, loss: 0.6187
+2022-03-27 13:51:14,552 - mmcls - INFO - Epoch [28][240/263]	lr: 1.000e-05, eta: 0:14:07, time: 1.576, data_time: 0.001, memory: 8636, loss: 0.5140
+2022-03-27 13:51:46,110 - mmcls - INFO - Epoch [28][260/263]	lr: 1.000e-05, eta: 0:13:36, time: 1.578, data_time: 0.001, memory: 8636, loss: 0.6457
+2022-03-27 13:51:49,565 - mmcls - INFO - Saving checkpoint at 28 epochs
+2022-03-27 13:52:21,321 - mmcls - INFO - Epoch(val) [28][57]	accuracy_top-1: 99.2758, accuracy_top-2: 99.8886, precision: 99.2809, recall: 99.2758, f1_score: 99.2754
+2022-03-27 13:52:54,768 - mmcls - INFO - Epoch [29][20/263]	lr: 1.000e-05, eta: 0:13:00, time: 1.671, data_time: 0.124, memory: 8636, loss: 0.5060
+2022-03-27 13:53:25,917 - mmcls - INFO - Epoch [29][40/263]	lr: 1.000e-05, eta: 0:12:30, time: 1.557, data_time: 0.001, memory: 8636, loss: 0.6086
+2022-03-27 13:53:57,093 - mmcls - INFO - Epoch [29][60/263]	lr: 1.000e-05, eta: 0:11:59, time: 1.559, data_time: 0.001, memory: 8636, loss: 0.5214
+2022-03-27 13:54:28,400 - mmcls - INFO - Epoch [29][80/263]	lr: 1.000e-05, eta: 0:11:28, time: 1.565, data_time: 0.001, memory: 8636, loss: 0.4998
+2022-03-27 13:54:59,823 - mmcls - INFO - Epoch [29][100/263]	lr: 1.000e-05, eta: 0:10:57, time: 1.571, data_time: 0.001, memory: 8636, loss: 0.5615
+2022-03-27 13:55:30,951 - mmcls - INFO - Epoch [29][120/263]	lr: 1.000e-05, eta: 0:10:26, time: 1.556, data_time: 0.001, memory: 8636, loss: 0.5603
+2022-03-27 13:56:02,327 - mmcls - INFO - Epoch [29][140/263]	lr: 1.000e-05, eta: 0:09:55, time: 1.569, data_time: 0.001, memory: 8636, loss: 0.5744
+2022-03-27 13:56:33,690 - mmcls - INFO - Epoch [29][160/263]	lr: 1.000e-05, eta: 0:09:25, time: 1.568, data_time: 0.001, memory: 8636, loss: 0.4762
+2022-03-27 13:57:04,882 - mmcls - INFO - Epoch [29][180/263]	lr: 1.000e-05, eta: 0:08:54, time: 1.560, data_time: 0.001, memory: 8636, loss: 0.4954
+2022-03-27 13:57:36,272 - mmcls - INFO - Epoch [29][200/263]	lr: 1.000e-05, eta: 0:08:23, time: 1.570, data_time: 0.001, memory: 8636, loss: 0.5049
+2022-03-27 13:58:07,672 - mmcls - INFO - Epoch [29][220/263]	lr: 1.000e-05, eta: 0:07:52, time: 1.570, data_time: 0.001, memory: 8636, loss: 0.5813
+2022-03-27 13:58:38,991 - mmcls - INFO - Epoch [29][240/263]	lr: 1.000e-05, eta: 0:07:21, time: 1.566, data_time: 0.001, memory: 8636, loss: 0.5218
+2022-03-27 13:59:10,235 - mmcls - INFO - Epoch [29][260/263]	lr: 1.000e-05, eta: 0:06:50, time: 1.562, data_time: 0.001, memory: 8636, loss: 0.5397
+2022-03-27 13:59:13,657 - mmcls - INFO - Saving checkpoint at 29 epochs
+2022-03-27 13:59:45,635 - mmcls - INFO - Epoch(val) [29][57]	accuracy_top-1: 99.2758, accuracy_top-2: 99.8886, precision: 99.2793, recall: 99.2758, f1_score: 99.2756
+2022-03-27 14:00:19,300 - mmcls - INFO - Epoch [30][20/263]	lr: 1.000e-05, eta: 0:06:15, time: 1.682, data_time: 0.121, memory: 8636, loss: 0.4727
+2022-03-27 14:00:50,729 - mmcls - INFO - Epoch [30][40/263]	lr: 1.000e-05, eta: 0:05:44, time: 1.572, data_time: 0.001, memory: 8636, loss: 0.5963
+2022-03-27 14:01:21,963 - mmcls - INFO - Epoch [30][60/263]	lr: 1.000e-05, eta: 0:05:13, time: 1.562, data_time: 0.001, memory: 8636, loss: 0.5734
+2022-03-27 14:01:53,270 - mmcls - INFO - Epoch [30][80/263]	lr: 1.000e-05, eta: 0:04:42, time: 1.566, data_time: 0.001, memory: 8636, loss: 0.5032
+2022-03-27 14:02:24,607 - mmcls - INFO - Epoch [30][100/263]	lr: 1.000e-05, eta: 0:04:11, time: 1.567, data_time: 0.001, memory: 8636, loss: 0.5330
+2022-03-27 14:02:55,802 - mmcls - INFO - Epoch [30][120/263]	lr: 1.000e-05, eta: 0:03:40, time: 1.560, data_time: 0.001, memory: 8636, loss: 0.5171
+2022-03-27 14:03:27,094 - mmcls - INFO - Epoch [30][140/263]	lr: 1.000e-05, eta: 0:03:09, time: 1.565, data_time: 0.001, memory: 8636, loss: 0.5474
+2022-03-27 14:03:58,340 - mmcls - INFO - Epoch [30][160/263]	lr: 1.000e-05, eta: 0:02:39, time: 1.562, data_time: 0.001, memory: 8636, loss: 0.5786
+2022-03-27 14:04:29,608 - mmcls - INFO - Epoch [30][180/263]	lr: 1.000e-05, eta: 0:02:08, time: 1.564, data_time: 0.001, memory: 8636, loss: 0.4124
+2022-03-27 14:05:00,843 - mmcls - INFO - Epoch [30][200/263]	lr: 1.000e-05, eta: 0:01:37, time: 1.562, data_time: 0.000, memory: 8636, loss: 0.6558
+2022-03-27 14:05:32,130 - mmcls - INFO - Epoch [30][220/263]	lr: 1.000e-05, eta: 0:01:06, time: 1.564, data_time: 0.000, memory: 8636, loss: 0.5102
+2022-03-27 14:06:03,470 - mmcls - INFO - Epoch [30][240/263]	lr: 1.000e-05, eta: 0:00:35, time: 1.567, data_time: 0.001, memory: 8636, loss: 0.5461
+2022-03-27 14:06:34,849 - mmcls - INFO - Epoch [30][260/263]	lr: 1.000e-05, eta: 0:00:04, time: 1.569, data_time: 0.001, memory: 8636, loss: 0.6462
+2022-03-27 14:06:38,324 - mmcls - INFO - Saving checkpoint at 30 epochs
+2022-03-27 14:07:10,086 - mmcls - INFO - Epoch(val) [30][57]	accuracy_top-1: 99.4429, accuracy_top-2: 99.8886, precision: 99.4440, recall: 99.4429, f1_score: 99.4426
